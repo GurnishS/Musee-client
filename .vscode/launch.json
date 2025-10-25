@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "name": "Musee-client (Flutter Chrome)",
+            "args": [
+                "--web-port=3000"
+            ],
+            "program": "lib/main.dart",
+            "deviceId": "chrome",
+            "request": "launch",
+            "type": "dart"
+        }
+    ]
+}
