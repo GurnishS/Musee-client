@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:dio/dio.dart' as dio;
 
 import 'package:musee/core/error/exceptions.dart';
+import 'package:musee/core/secrets/app_secrets.dart';
 import 'package:musee/features/auth/data/models/user_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -29,6 +31,10 @@ abstract interface class AuthRemoteDataSource {
 
   /// Sign in with Google OAuth
   Future<UserModel> signInWithGoogle();
+
+  /// Build a UserModel from the Supabase auth user/session (no DB lookup).
+  /// Returns null if there is no authenticated user.
+  Future<UserModel?> getAuthUserModel();
 
   /// Get current user data
   Future<UserModel?> getCurrentUserData();
@@ -77,7 +83,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       if (response.user == null) {
-        throw const ServerException('User creation failed');
+        throw ServerException('User creation failed');
       }
 
       // Check if email verification is required
@@ -85,7 +91,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         throw EmailVerificationRequiredException(email);
       }
 
-      return await _getUserData(response.user!.id, response.user!.email, name);
+      return await _getUserData(response.user!.id);
     } on EmailVerificationRequiredException {
       rethrow;
     } catch (e) {
@@ -108,7 +114,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         throw const ServerException('Sign in failed');
       }
 
-      return await _getUserDataFromDb(response.user!.id, response.user!.email);
+      return await _getUserData(response.user!.id);
     } catch (e) {
       throw ServerException('Sign in failed: ${e.toString()}');
     }
@@ -135,9 +141,34 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final session = currentSession;
       if (session == null) return null;
 
-      return await _getUserDataFromDb(session.user.id, session.user.email);
+      return await _getUserData(session.user.id);
     } catch (e) {
       throw ServerException('Failed to get user data: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<UserModel?> getAuthUserModel() async {
+    try {
+      final authUser = supabaseClient.auth.currentUser;
+      if (authUser == null) return null;
+
+      final defaultAvatar =
+          'https://xvpputhovrhgowfkjhfv.supabase.co/storage/v1/object/public/avatars/users/default_avatar.png';
+
+      final nameFromMetadata = authUser.userMetadata?['name'] as String?;
+      final avatarFromMetadata =
+          authUser.userMetadata?['avatar_url'] as String?;
+
+      return UserModel(
+        id: authUser.id,
+        name: nameFromMetadata ?? authUser.email ?? 'User',
+        email: authUser.email,
+        avatarUrl: avatarFromMetadata ?? defaultAvatar,
+      );
+    } catch (e) {
+      // Don't throw; return null to indicate no auth user could be built.
+      return null;
     }
   }
 
@@ -208,11 +239,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         onTimeout: () => throw TimeoutException('Login timed out'),
       );
 
-      return await _getUserData(
-        session.user.id,
-        session.user.email,
-        session.user.userMetadata?['name'] ?? 'Google User',
-      );
+      return await _getUserData(session.user.id);
     } finally {
       await server.close(force: true);
     }
@@ -246,13 +273,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       throw 'Failed to authenticate with Supabase';
     }
 
-    return await _getUserData(
-      response.user!.id,
-      response.user!.email ?? googleUser.email,
-      response.user!.userMetadata?['name'] ??
-          googleUser.displayName ??
-          'Google User',
-    );
+    return await _getUserData(response.user!.id);
   }
 
   /// Create HTTP handler for OAuth callback
@@ -298,51 +319,66 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     };
   }
 
-  /// Get user data with fallback creation
-  Future<UserModel> _getUserData(String id, String? email, String name) async {
-    try {
-      // Use maybeSingle() to avoid PostgREST 406 when no rows are returned.
-      final userData = await supabaseClient
-          .from('users')
-          .select()
-          .eq('user_id', id)
-          .maybeSingle();
+  // /// Get user data with fallback creation
+  // Future<UserModel> _getUserData(String id, String? email, String name) async {
+  //   try {
+  //     // Use maybeSingle() to avoid PostgREST 406 when no rows are returned.
+  //     final userData = await supabaseClient
+  //         .from('users')
+  //         .select()
+  //         .eq('user_id', id)
+  //         .maybeSingle();
 
-      if (userData == null) {
-        // No public.users row exists for this auth user yet — return a minimal model
-        // The repository or a later migration can create the DB row if needed.
-        return UserModel(id: id, email: email ?? 'unknown', name: name);
+  //     if (kDebugMode) {
+  //       debugPrint("Fetched User Data: $userData");
+  //     }
+
+  //     if (userData == null) {
+  //       // No public.users row exists for this auth user yet — return a minimal model
+  //       // The repository or a later migration can create the DB row if needed.
+  //       return UserModel(id: id, email: email ?? 'unknown', name: name);
+  //     }
+
+  //     return UserModel.fromJson(userData).copyWith(email: email);
+  //   } catch (e) {
+  //     // Return user model with provided data if DB fetch fails
+  //     return UserModel(id: id, email: email ?? 'unknown', name: name);
+  //   }
+  // }
+
+  Future<UserModel> _getUserData(String id) async {
+    try {
+      final accessToken = supabaseClient.auth.currentSession?.accessToken;
+      final client = dio.Dio();
+      final res = await client.get(
+        '${AppSecrets.backendUrl}/api/user/users/me',
+        options: dio.Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            if (accessToken != null && accessToken.isNotEmpty)
+              'Authorization': 'Bearer $accessToken',
+          },
+          sendTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      if (res.statusCode == 200 && res.data is Map<String, dynamic>) {
+        final data = Map<String, dynamic>.from(res.data as Map);
+        if (kDebugMode) debugPrint('✅ User data from backend: $data');
+        return UserModel.fromJson(data);
       }
 
-      return UserModel.fromJson(userData).copyWith(email: email);
-    } catch (e) {
-      // Return user model with provided data if DB fetch fails
-      return UserModel(id: id, email: email ?? 'unknown', name: name);
-    }
-  }
-
-  /// Get user data from database
-  Future<UserModel> _getUserDataFromDb(String id, String? email) async {
-    if (kDebugMode) {
-      debugPrint("Getting Data For user id$id");
-    }
-    // Use maybeSingle() so we don't throw when the row doesn't exist
-    final userData = await supabaseClient
-        .from('users')
-        .select()
-        .eq('user_id', id)
-        .maybeSingle();
-
-    if (userData == null) {
-      // No row in public.users; return a minimal model so sign-in can proceed.
-      return UserModel(
-        id: id,
-        email: email ?? 'unknown',
-        name: email ?? 'User',
+      throw ServerExceptionWithStatusCode(
+        res.statusCode ?? 500,
+        'Failed to fetch user data from backend',
       );
+    } catch (e) {
+      if (kDebugMode) debugPrint('❌ Error fetching user data: $e');
+      // Fallback minimal user to keep app responsive
+      return UserModel(id: id, name: 'Unknown');
     }
-
-    return UserModel.fromJson(userData).copyWith(email: email);
   }
 
   /// Build responsive success page for OAuth callback

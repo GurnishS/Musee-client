@@ -74,11 +74,13 @@ class _MyAppState extends State<MyApp> {
       routerConfig: _router,
       // --- Light Theme Definition ---
       theme: ThemeData(
+        cardColor: AppColors.lightColorScheme.secondary.withAlpha(10),
         colorScheme: AppColors.lightColorScheme,
         useMaterial3: true,
       ),
       // Dark Theme
       darkTheme: ThemeData(
+        cardColor: AppColors.darkColorScheme.secondary.withAlpha(10),
         colorScheme: AppColors.darkColorScheme,
         useMaterial3: true,
       ),

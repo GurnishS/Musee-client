@@ -4,6 +4,13 @@ class ServerException implements Exception {
   const ServerException(this.message);
 }
 
+class ServerExceptionWithStatusCode extends ServerException {
+  final int statusCode;
+
+  const ServerExceptionWithStatusCode(this.statusCode, String message)
+      : super(message);
+}
+
 class EmailVerificationRequiredException implements Exception {
   final String email;
   const EmailVerificationRequiredException(this.email);

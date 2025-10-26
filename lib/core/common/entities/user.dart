@@ -35,7 +35,8 @@ class User {
     this.email,
     this.subscriptionType = SubscriptionType.free,
     this.planId,
-    this.avatarUrl = 'https://xvpputhovrhgowfkjhfv.supabase.co/storage/v1/object/public/avatars/users/default_avatar.png',
+    this.avatarUrl =
+        'https://xvpputhovrhgowfkjhfv.supabase.co/storage/v1/object/public/avatars/users/default_avatar.png',
     List<String>? playlists,
     Map<String, dynamic>? favorites,
     this.followersCount = 0,
@@ -45,9 +46,9 @@ class User {
     this.createdAt,
     this.updatedAt,
     this.userType = UserType.listener,
-  })  : playlists = playlists ?? <String>[],
-        favorites = favorites ?? <String, dynamic>{},
-        settings = settings ?? <String, dynamic>{};
+  }) : playlists = playlists ?? <String>[],
+       favorites = favorites ?? <String, dynamic>{},
+       settings = settings ?? <String, dynamic>{};
 
   User copyWith({
     String? id,
@@ -116,7 +117,11 @@ class User {
         // Sometimes Postgres drivers return '{uuid1,uuid2}' style
         final cleaned = input.replaceAll(RegExp(r'[{}]'), '');
         if (cleaned.trim().isEmpty) return <String>[];
-        return cleaned.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+        return cleaned
+            .split(',')
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
       }
       return <String>[];
     }
@@ -142,7 +147,8 @@ class User {
       return null;
     }
 
-    final subTypeStr = (json['subscription_type'] ?? json['subscriptionType'])?.toString();
+    final subTypeStr = (json['subscription_type'] ?? json['subscriptionType'])
+        ?.toString();
     final userTypeStr = (json['user_type'] ?? json['userType'])?.toString();
 
     return User(
@@ -174,7 +180,7 @@ class User {
 enum SubscriptionType {
   free('free'),
   premium('premium'),
-  unknown('unknown');
+  trial('trial');
 
   final String value;
   const SubscriptionType(this.value);
@@ -185,14 +191,14 @@ enum SubscriptionType {
     for (final t in SubscriptionType.values) {
       if (t.value == s) return t;
     }
-    return SubscriptionType.unknown;
+    return SubscriptionType.free;
   }
 }
 
 enum UserType {
   listener('listener'),
   artist('artist'),
-  unknown('unknown');
+  admin('admin');
 
   final String value;
   const UserType(this.value);
@@ -203,6 +209,6 @@ enum UserType {
     for (final t in UserType.values) {
       if (t.value == s) return t;
     }
-    return UserType.unknown;
+    return UserType.listener;
   }
 }
