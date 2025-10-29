@@ -27,6 +27,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.35.4'
+          cache: true
 
       - run: flutter pub get
 
@@ -43,6 +44,7 @@ jobs:
           }
           EOF
 
+      # 🐧 Install required build packages for Linux only
       - name: Install Linux dependencies
         if: matrix.platform == 'linux'
         run: |
@@ -62,19 +64,28 @@ jobs:
             flutter build macos --release
           fi
 
-      - name: Zip build output
-        shell: bash
+      # ✅ Correct cross-platform packaging
+      - name: Package build output
         run: |
           mkdir -p dist
+          VERSION=${GITHUB_REF_NAME}
           if [ "${{ matrix.platform }}" == "android" ]; then
-            cp build/app/outputs/flutter-apk/app-release.apk dist/musee-android.apk
+            cp build/app/outputs/flutter-apk/app-release.apk dist/musee-android-${VERSION}.apk
           elif [ "${{ matrix.platform }}" == "linux" ]; then
-            zip -r dist/musee-linux.zip build/linux/x64/release/bundle/
-          elif [ "${{ matrix.platform }}" == "windows" ]; then
-            powershell -Command "Compress-Archive -Path 'build/windows/x64/runner/Release/*' -DestinationPath 'dist/musee-windows.zip' -Force"
+            zip -r dist/musee-linux-${VERSION}.zip build/linux/x64/release/bundle/
           elif [ "${{ matrix.platform }}" == "macos" ]; then
-            zip -r dist/musee-macos.zip build/macos/Build/Products/Release/
+            zip -r dist/musee-macos-${VERSION}.zip build/macos/Build/Products/Release/
           fi
+        shell: bash
+
+      - name: Package Windows output
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          $version = "${{ github.ref_name }}"
+          Compress-Archive -Path (Get-ChildItem -Path 'build/windows/x64/runner/Release' -Recurse) `
+            -DestinationPath "dist/musee-windows-$version.zip" -Force
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -94,5 +105,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ./artifacts/**/*.zip
-          token: ${{ secrets.GITHUB_TOKEN }}
+          files: ./artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
