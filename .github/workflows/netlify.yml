@@ -41,6 +41,11 @@ jobs:
           }
           EOF
 
+      - name: Add Netlify redirects for Flutter Web routing
+        run: |
+          mkdir -p web
+          echo "/* /index.html 200" > web/_redirects
+
       - name: Build Flutter Web
         run: flutter build web --release
 
