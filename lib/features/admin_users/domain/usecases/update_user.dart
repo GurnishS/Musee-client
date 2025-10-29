@@ -15,7 +15,6 @@ class UpdateUser implements UseCase<User, UpdateUserParams> {
       name: params.name,
       email: params.email,
       subscriptionType: params.subscriptionType,
-      userType: params.userType,
       planId: params.planId,
       avatarBytes: params.avatarBytes,
       avatarFilename: params.avatarFilename,
@@ -28,7 +27,6 @@ class UpdateUserParams {
   final String? name;
   final String? email;
   final SubscriptionType? subscriptionType;
-  final UserType? userType;
   final String? planId;
   final List<int>? avatarBytes;
   final String? avatarFilename;
@@ -38,7 +36,6 @@ class UpdateUserParams {
     this.name,
     this.email,
     this.subscriptionType,
-    this.userType,
     this.planId,
     this.avatarBytes,
     this.avatarFilename,

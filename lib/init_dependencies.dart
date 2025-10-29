@@ -24,6 +24,33 @@ import 'package:musee/features/admin_users/domain/usecases/create_user.dart';
 import 'package:musee/features/admin_users/domain/usecases/update_user.dart';
 import 'package:musee/features/admin_users/domain/usecases/delete_user.dart';
 import 'package:musee/features/admin_users/presentation/bloc/admin_users_bloc.dart';
+import 'package:musee/features/admin_artists/data/datasources/admin_artists_remote_data_source.dart';
+import 'package:musee/features/admin_artists/data/repositories/admin_artists_repository_impl.dart';
+import 'package:musee/features/admin_artists/domain/repository/admin_artists_repository.dart';
+import 'package:musee/features/admin_artists/domain/usecases/list_artists.dart';
+import 'package:musee/features/admin_artists/domain/usecases/get_artist.dart';
+import 'package:musee/features/admin_artists/domain/usecases/create_artist.dart';
+import 'package:musee/features/admin_artists/domain/usecases/update_artist.dart';
+import 'package:musee/features/admin_artists/domain/usecases/delete_artist.dart';
+import 'package:musee/features/admin_artists/presentation/bloc/admin_artists_bloc.dart';
+import 'package:musee/features/admin_albums/data/datasources/admin_albums_remote_data_source.dart';
+import 'package:musee/features/admin_albums/data/repositories/admin_albums_repository_impl.dart';
+import 'package:musee/features/admin_albums/domain/repository/admin_albums_repository.dart';
+import 'package:musee/features/admin_albums/domain/usecases/list_albums.dart';
+import 'package:musee/features/admin_albums/domain/usecases/get_album.dart';
+import 'package:musee/features/admin_albums/domain/usecases/create_album.dart';
+import 'package:musee/features/admin_albums/domain/usecases/update_album.dart';
+import 'package:musee/features/admin_albums/domain/usecases/delete_album.dart';
+import 'package:musee/features/admin_albums/presentation/bloc/admin_albums_bloc.dart';
+import 'package:musee/features/admin_plans/data/datasources/admin_plans_remote_data_source.dart';
+import 'package:musee/features/admin_plans/data/repositories/admin_plans_repository_impl.dart';
+import 'package:musee/features/admin_plans/domain/repository/admin_plans_repository.dart';
+import 'package:musee/features/admin_plans/domain/usecases/list_plans.dart';
+import 'package:musee/features/admin_plans/domain/usecases/get_plan.dart';
+import 'package:musee/features/admin_plans/domain/usecases/create_plan.dart';
+import 'package:musee/features/admin_plans/domain/usecases/update_plan.dart';
+import 'package:musee/features/admin_plans/domain/usecases/delete_plan.dart';
+import 'package:musee/features/admin_plans/presentation/bloc/admin_plans_bloc.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -44,6 +71,12 @@ Future<void> initDependencies() async {
   _initAuth();
   // admin users
   _initAdminUsers();
+  // admin artists
+  _initAdminArtists();
+  // admin albums
+  _initAdminAlbums();
+  // admin plans
+  _initAdminPlans();
 }
 
 void _initAuth() {
@@ -102,6 +135,96 @@ void _initAdminUsers() {
         createUser: serviceLocator(),
         updateUser: serviceLocator(),
         deleteUser: serviceLocator(),
+      ),
+    );
+}
+
+void _initAdminArtists() {
+  serviceLocator
+    // datasource
+    ..registerLazySingleton<AdminArtistsRemoteDataSource>(
+      () => AdminArtistsRemoteDataSourceImpl(
+        serviceLocator<Dio>(),
+        serviceLocator(),
+      ),
+    )
+    // repository
+    ..registerLazySingleton<AdminArtistsRepository>(
+      () => AdminArtistsRepositoryImpl(serviceLocator()),
+    )
+    // use cases
+    ..registerFactory(() => ListArtists(serviceLocator()))
+    ..registerFactory(() => GetArtist(serviceLocator()))
+    ..registerFactory(() => CreateArtist(serviceLocator()))
+    ..registerFactory(() => UpdateArtist(serviceLocator()))
+    ..registerFactory(() => DeleteArtist(serviceLocator()))
+    // bloc
+    ..registerFactory(
+      () => AdminArtistsBloc(
+        list: serviceLocator(),
+        create: serviceLocator(),
+        update: serviceLocator(),
+        delete: serviceLocator(),
+      ),
+    );
+}
+
+void _initAdminAlbums() {
+  serviceLocator
+    // datasource
+    ..registerLazySingleton<AdminAlbumsRemoteDataSource>(
+      () => AdminAlbumsRemoteDataSourceImpl(
+        serviceLocator<Dio>(),
+        serviceLocator(),
+      ),
+    )
+    // repository
+    ..registerLazySingleton<AdminAlbumsRepository>(
+      () => AdminAlbumsRepositoryImpl(serviceLocator()),
+    )
+    // use cases
+    ..registerFactory(() => ListAlbums(serviceLocator()))
+    ..registerFactory(() => GetAlbum(serviceLocator()))
+    ..registerFactory(() => CreateAlbum(serviceLocator()))
+    ..registerFactory(() => UpdateAlbum(serviceLocator()))
+    ..registerFactory(() => DeleteAlbum(serviceLocator()))
+    // bloc
+    ..registerFactory(
+      () => AdminAlbumsBloc(
+        list: serviceLocator(),
+        create: serviceLocator(),
+        update: serviceLocator(),
+        delete: serviceLocator(),
+      ),
+    );
+}
+
+void _initAdminPlans() {
+  serviceLocator
+    // datasource
+    ..registerLazySingleton<AdminPlansRemoteDataSource>(
+      () => AdminPlansRemoteDataSourceImpl(
+        serviceLocator<Dio>(),
+        serviceLocator(),
+      ),
+    )
+    // repository
+    ..registerLazySingleton<AdminPlansRepository>(
+      () => AdminPlansRepositoryImpl(serviceLocator()),
+    )
+    // use cases
+    ..registerFactory(() => ListPlans(serviceLocator()))
+    ..registerFactory(() => GetPlan(serviceLocator()))
+    ..registerFactory(() => CreatePlan(serviceLocator()))
+    ..registerFactory(() => UpdatePlan(serviceLocator()))
+    ..registerFactory(() => DeletePlan(serviceLocator()))
+    // bloc
+    ..registerFactory(
+      () => AdminPlansBloc(
+        list: serviceLocator(),
+        create: serviceLocator(),
+        update: serviceLocator(),
+        delete: serviceLocator(),
       ),
     );
 }

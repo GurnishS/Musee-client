@@ -46,7 +46,6 @@ class AdminRepositoryImpl implements AdminRepository {
     required String name,
     required String email,
     SubscriptionType subscriptionType = SubscriptionType.free,
-    UserType userType = UserType.listener,
     String? planId,
     List<int>? avatarBytes,
     String? avatarFilename,
@@ -56,7 +55,6 @@ class AdminRepositoryImpl implements AdminRepository {
         name: name,
         email: email,
         subscriptionType: subscriptionType,
-        userType: userType,
         planId: planId,
         avatarBytes: avatarBytes != null
             ? Uint8List.fromList(avatarBytes)
@@ -77,7 +75,6 @@ class AdminRepositoryImpl implements AdminRepository {
     String? name,
     String? email,
     SubscriptionType? subscriptionType,
-    UserType? userType,
     String? planId,
     List<int>? avatarBytes,
     String? avatarFilename,
@@ -88,7 +85,6 @@ class AdminRepositoryImpl implements AdminRepository {
         name: name,
         email: email,
         subscriptionType: subscriptionType,
-        userType: userType,
         planId: planId,
         avatarBytes: avatarBytes != null
             ? Uint8List.fromList(avatarBytes)

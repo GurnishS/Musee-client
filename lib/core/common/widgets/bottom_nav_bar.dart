@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:musee/core/common/widgets/floating_player_panel.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -14,43 +15,58 @@ class BottomNavBar extends StatelessWidget {
       notchMargin: 8.0,
       color: colorScheme.surface,
       elevation: 8,
+      padding: EdgeInsets.all(4),
+      height: 180,
       child: SizedBox(
-        height: 60,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: <Widget>[
-            _buildNavItem(
-              context,
-              Icons.home_outlined,
-              Icons.home,
-              0,
-              'Home',
-              '/dashboard',
-            ),
-            _buildNavItem(
-              context,
-              Icons.search_outlined,
-              Icons.search,
-              1,
-              'Search',
-              '/search',
-            ),
-            const SizedBox(width: 64), // Space for FAB
-            _buildNavItem(
-              context,
-              Icons.menu_outlined,
-              Icons.menu,
-              2,
-              'Downloads',
-              '/downloads',
-            ),
-            _buildNavItem(
-              context,
-              Icons.person_outline,
-              Icons.person,
-              3,
-              'Profile',
-              '/profile',
+        height: 200,
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            FloatingPlayerPanel(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: <Widget>[
+                _buildNavItem(
+                  context,
+                  Icons.home_outlined,
+                  Icons.home,
+                  0,
+                  'Home',
+                  '/dashboard',
+                ),
+                _buildNavItem(
+                  context,
+                  Icons.search_outlined,
+                  Icons.search,
+                  1,
+                  'Search',
+                  '/search',
+                ),
+                _buildNavItem(
+                  context,
+                  Icons.library_books_outlined,
+                  Icons.library_books,
+                  2,
+                  'Your Library',
+                  '/library',
+                ),
+                _buildNavItem(
+                  context,
+                  Icons.money_outlined,
+                  Icons.money,
+                  3,
+                  'Premium',
+                  '/premium',
+                ),
+                _buildNavItem(
+                  context,
+                  Icons.add_outlined,
+                  Icons.add,
+                  3,
+                  'Create',
+                  '/create',
+                ),
+              ],
             ),
           ],
         ),

@@ -109,10 +109,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     final res = await _currentUser(NoParams());
 
-    res.fold(
-      (failure) => emit(AuthFailure(failure.message)),
-      (user) => _emitAuthSuccess(user, emit),
-    );
+    res.fold((failure) {
+      // If we cannot load current user (e.g., no valid session),
+      // clear any hydrated user so router redirects to sign-in.
+      _appUserCubit.updateUser(null);
+      emit(AuthInitial());
+    }, (user) => _emitAuthSuccess(user, emit));
   }
 
   Future<void> _onAuthSignUp(AuthSignUp event, Emitter<AuthState> emit) async {

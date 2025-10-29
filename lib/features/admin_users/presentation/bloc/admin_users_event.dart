@@ -13,7 +13,6 @@ final class CreateUserEvent extends AdminUsersEvent {
   final String name;
   final String email;
   final SubscriptionType subscriptionType;
-  final UserType userType;
   final String? planId;
   final List<int>? avatarBytes;
   final String? avatarFilename;
@@ -21,7 +20,6 @@ final class CreateUserEvent extends AdminUsersEvent {
     required this.name,
     required this.email,
     this.subscriptionType = SubscriptionType.free,
-    this.userType = UserType.listener,
     this.planId,
     this.avatarBytes,
     this.avatarFilename,
@@ -33,7 +31,6 @@ final class UpdateUserEvent extends AdminUsersEvent {
   final String? name;
   final String? email;
   final SubscriptionType? subscriptionType;
-  final UserType? userType;
   final String? planId;
   final List<int>? avatarBytes;
   final String? avatarFilename;
@@ -42,7 +39,6 @@ final class UpdateUserEvent extends AdminUsersEvent {
     this.name,
     this.email,
     this.subscriptionType,
-    this.userType,
     this.planId,
     this.avatarBytes,
     this.avatarFilename,

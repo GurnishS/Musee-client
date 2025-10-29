@@ -32,9 +32,9 @@ abstract interface class AuthRemoteDataSource {
   /// Sign in with Google OAuth
   Future<UserModel> signInWithGoogle();
 
-  /// Build a UserModel from the Supabase auth user/session (no DB lookup).
-  /// Returns null if there is no authenticated user.
-  Future<UserModel?> getAuthUserModel();
+  // /// Build a UserModel from the Supabase auth user/session (no DB lookup).
+  // /// Returns null if there is no authenticated user.
+  // Future<UserModel?> getAuthUserModel();
 
   /// Get current user data
   Future<UserModel?> getCurrentUserData();
@@ -147,30 +147,30 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
-  @override
-  Future<UserModel?> getAuthUserModel() async {
-    try {
-      final authUser = supabaseClient.auth.currentUser;
-      if (authUser == null) return null;
+  // @override
+  // Future<UserModel?> getAuthUserModel() async {
+  //   try {
+  //     final authUser = supabaseClient.auth.currentUser;
+  //     if (authUser == null) return null;
 
-      final defaultAvatar =
-          'https://xvpputhovrhgowfkjhfv.supabase.co/storage/v1/object/public/avatars/users/default_avatar.png';
+  //     final defaultAvatar =
+  //         'https://xvpputhovrhgowfkjhfv.supabase.co/storage/v1/object/public/avatars/users/default_avatar.png';
 
-      final nameFromMetadata = authUser.userMetadata?['name'] as String?;
-      final avatarFromMetadata =
-          authUser.userMetadata?['avatar_url'] as String?;
+  //     final nameFromMetadata = authUser.userMetadata?['name'] as String?;
+  //     final avatarFromMetadata =
+  //         authUser.userMetadata?['avatar_url'] as String?;
 
-      return UserModel(
-        id: authUser.id,
-        name: nameFromMetadata ?? authUser.email ?? 'User',
-        email: authUser.email,
-        avatarUrl: avatarFromMetadata ?? defaultAvatar,
-      );
-    } catch (e) {
-      // Don't throw; return null to indicate no auth user could be built.
-      return null;
-    }
-  }
+  //     return UserModel(
+  //       id: authUser.id,
+  //       name: nameFromMetadata ?? authUser.email ?? 'User',
+  //       email: authUser.email,
+  //       avatarUrl: avatarFromMetadata ?? defaultAvatar,
+  //     );
+  //   } catch (e) {
+  //     // Don't throw; return null to indicate no auth user could be built.
+  //     return null;
+  //   }
+  // }
 
   @override
   Future<void> logout() async {
@@ -319,34 +319,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     };
   }
 
-  // /// Get user data with fallback creation
-  // Future<UserModel> _getUserData(String id, String? email, String name) async {
-  //   try {
-  //     // Use maybeSingle() to avoid PostgREST 406 when no rows are returned.
-  //     final userData = await supabaseClient
-  //         .from('users')
-  //         .select()
-  //         .eq('user_id', id)
-  //         .maybeSingle();
-
-  //     if (kDebugMode) {
-  //       debugPrint("Fetched User Data: $userData");
-  //     }
-
-  //     if (userData == null) {
-  //       // No public.users row exists for this auth user yet — return a minimal model
-  //       // The repository or a later migration can create the DB row if needed.
-  //       return UserModel(id: id, email: email ?? 'unknown', name: name);
-  //     }
-
-  //     return UserModel.fromJson(userData).copyWith(email: email);
-  //   } catch (e) {
-  //     // Return user model with provided data if DB fetch fails
-  //     return UserModel(id: id, email: email ?? 'unknown', name: name);
-  //   }
-  // }
-
   Future<UserModel> _getUserData(String id) async {
+    if(kDebugMode){
+      debugPrint('Fetching user data for ID: $id');
+    }
     try {
       final accessToken = supabaseClient.auth.currentSession?.accessToken;
       final client = dio.Dio();
@@ -376,8 +352,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
     } catch (e) {
       if (kDebugMode) debugPrint('❌ Error fetching user data: $e');
-      // Fallback minimal user to keep app responsive
-      return UserModel(id: id, name: 'Unknown');
+      rethrow;
     }
   }
 
@@ -572,7 +547,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         </button>
         
         <div class="footer">
-            Powered by <span class="brand">BufferZero</span>
+            Powered by <span class="brand">musee</span>
         </div>
     </div>
     
@@ -834,7 +809,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         </button>
         
         <div class="footer">
-            Powered by <span class="brand">BufferZero</span>
+            Powered by <span class="brand">musee</span>
         </div>
     </div>
     

@@ -17,7 +17,6 @@ abstract interface class AdminRemoteDataSource {
     required String name,
     required String email,
     SubscriptionType subscriptionType,
-    UserType userType,
     String? planId,
     Uint8List? avatarBytes,
     String? avatarFilename,
@@ -28,7 +27,6 @@ abstract interface class AdminRemoteDataSource {
     String? name,
     String? email,
     SubscriptionType? subscriptionType,
-    UserType? userType,
     String? planId,
     Uint8List? avatarBytes,
     String? avatarFilename,
@@ -61,11 +59,11 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
   }) async {
     final res = await _dio.get(
       basePath,
-      // queryParameters: {
-      //   'page': page,
-      //   'limit': limit,
-      //   if (search != null && search.trim().isNotEmpty) 'q': search.trim(),
-      // },
+      queryParameters: {
+        'page': page,
+        'limit': limit,
+        if (search != null && search.trim().isNotEmpty) 'q': search.trim(),
+      },
       options: dio.Options(headers: _authHeader()),
     );
     if (kDebugMode) {
@@ -96,7 +94,6 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     required String name,
     required String email,
     SubscriptionType subscriptionType = SubscriptionType.free,
-    UserType userType = UserType.listener,
     String? planId,
     Uint8List? avatarBytes,
     String? avatarFilename,
@@ -105,8 +102,7 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     formData.fields
       ..add(MapEntry('name', name))
       ..add(MapEntry('email', email))
-      ..add(MapEntry('subscription_type', subscriptionType.value))
-      ..add(MapEntry('user_type', userType.value));
+      ..add(MapEntry('subscription_type', subscriptionType.value));
     if (planId != null) formData.fields.add(MapEntry('plan_id', planId));
     if (avatarBytes != null && avatarFilename != null) {
       formData.files.add(
@@ -131,7 +127,6 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
     String? name,
     String? email,
     SubscriptionType? subscriptionType,
-    UserType? userType,
     String? planId,
     Uint8List? avatarBytes,
     String? avatarFilename,
@@ -144,8 +139,6 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
         MapEntry('subscription_type', subscriptionType.value),
       );
     }
-    if (userType != null)
-      formData.fields.add(MapEntry('user_type', userType.value));
     if (planId != null) formData.fields.add(MapEntry('plan_id', planId));
     if (avatarBytes != null && avatarFilename != null) {
       formData.files.add(

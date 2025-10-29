@@ -1,3 +1,4 @@
+import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -35,7 +36,11 @@ void main() async {
         BlocProvider(create: (_) => serviceLocator<AuthBloc>()),
         BlocProvider(create: (_) => serviceLocator<AppUserCubit>()),
       ],
-      child: const MyApp(),
+      child: DevicePreview(
+        builder: (BuildContext context) {
+          return const MyApp();
+        },
+      ),
     ),
   );
 }
@@ -69,7 +74,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'BufferZero',
+      title: 'musee',
       debugShowCheckedModeBanner: false,
       routerConfig: _router,
       // --- Light Theme Definition ---

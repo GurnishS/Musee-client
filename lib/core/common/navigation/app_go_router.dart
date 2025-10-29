@@ -8,6 +8,12 @@ import 'package:musee/features/user__dashboard/presentation/pages/user_dashboard
 import 'package:musee/features/admin_users/presentation/pages/admin_users_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:musee/features/admin_users/presentation/bloc/admin_users_bloc.dart';
+import 'package:musee/features/admin_artists/presentation/pages/admin_artists_page.dart';
+import 'package:musee/features/admin_artists/presentation/bloc/admin_artists_bloc.dart';
+import 'package:musee/features/admin_albums/presentation/bloc/admin_albums_bloc.dart';
+import 'package:musee/features/admin_albums/presentation/pages/admin_albums_page.dart';
+import 'package:musee/features/admin_plans/presentation/pages/admin_plans_page.dart';
+import 'package:musee/features/admin_plans/presentation/bloc/admin_plans_bloc.dart';
 import 'package:musee/init_dependencies.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -26,8 +32,6 @@ class AppGoRouter {
       refreshListenable: AppUserChangeNotifier(appUserCubit),
       redirect: (context, state) {
         final isAuthenticated = appUserCubit.state is AppUserLoggedIn;
-
-        if (kDebugMode) debugPrint("Auth:|$isAuthenticated $isAdmin");
 
         final intendedLocation = state.uri.toString();
 
@@ -80,6 +84,33 @@ class AppGoRouter {
           builder: (context, state) => BlocProvider(
             create: (_) => serviceLocator<AdminUsersBloc>(),
             child: const AdminUsersPage(),
+          ),
+        ),
+
+        GoRoute(
+          path: Routes.adminArtists,
+          name: 'admin_artists',
+          builder: (context, state) => BlocProvider(
+            create: (_) => serviceLocator<AdminArtistsBloc>(),
+            child: const AdminArtistsPage(),
+          ),
+        ),
+
+        GoRoute(
+          path: Routes.adminAlbums,
+          name: 'admin_albums',
+          builder: (context, state) => BlocProvider(
+            create: (_) => serviceLocator<AdminAlbumsBloc>(),
+            child: const AdminAlbumsPage(),
+          ),
+        ),
+
+        GoRoute(
+          path: Routes.adminPlans,
+          name: 'admin_plans',
+          builder: (context, state) => BlocProvider(
+            create: (_) => serviceLocator<AdminPlansBloc>(),
+            child: const AdminPlansPage(),
           ),
         ),
 

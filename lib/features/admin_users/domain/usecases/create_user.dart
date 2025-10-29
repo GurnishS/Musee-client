@@ -14,7 +14,6 @@ class CreateUser implements UseCase<User, CreateUserParams> {
       name: params.name,
       email: params.email,
       subscriptionType: params.subscriptionType,
-      userType: params.userType,
       planId: params.planId,
       avatarBytes: params.avatarBytes,
       avatarFilename: params.avatarFilename,
@@ -26,7 +25,6 @@ class CreateUserParams {
   final String name;
   final String email;
   final SubscriptionType subscriptionType;
-  final UserType userType;
   final String? planId;
   final List<int>? avatarBytes;
   final String? avatarFilename;
@@ -35,7 +33,6 @@ class CreateUserParams {
     required this.name,
     required this.email,
     this.subscriptionType = SubscriptionType.free,
-    this.userType = UserType.listener,
     this.planId,
     this.avatarBytes,
     this.avatarFilename,

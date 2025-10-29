@@ -70,7 +70,6 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, User>> _getUser(Future<User> Function() fn) async {
     try {
       final user = await fn();
-
       return right(user);
     } on sb.AuthException catch (e) {
       return left(Failure((e.message)));

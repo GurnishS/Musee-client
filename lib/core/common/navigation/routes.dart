@@ -5,6 +5,9 @@ class Routes {
   // Admin dashboard
   static const String adminDashboard = '/admin';
   static const String adminUsers = '/admin/users';
+  static const String adminArtists = '/admin/artists';
+  static const String adminAlbums = '/admin/albums';
+  static const String adminPlans = '/admin/plans';
 
   // Authentication
   static const String signIn = '/sign-in';

@@ -2,39 +2,22 @@ import 'package:musee/core/common/entities/user.dart';
 
 class UserModel extends User {
   UserModel({
-    required String id,
-    required String name,
-    String? email,
-    SubscriptionType subscriptionType = SubscriptionType.free,
-    String? planId,
-    String avatarUrl =
-        'https://xvpputhovrhgowfkjhfv.supabase.co/storage/v1/object/public/avatars/users/default_avatar.png',
-    List<String>? playlists,
-    Map<String, dynamic>? favorites,
-    int followersCount = 0,
-    int followingsCount = 0,
-    DateTime? lastLoginAt,
-    Map<String, dynamic>? settings,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-    UserType userType = UserType.listener,
-  }) : super(
-         id: id,
-         name: name,
-         email: email,
-         subscriptionType: subscriptionType,
-         planId: planId,
-         avatarUrl: avatarUrl,
-         playlists: playlists,
-         favorites: favorites,
-         followersCount: followersCount,
-         followingsCount: followingsCount,
-         lastLoginAt: lastLoginAt,
-         settings: settings,
-         createdAt: createdAt,
-         updatedAt: updatedAt,
-         userType: userType,
-       );
+    required super.id,
+    required super.name,
+    super.email,
+    super.subscriptionType,
+    super.planId,
+    super.avatarUrl,
+    super.playlists,
+    super.favorites,
+    super.followersCount,
+    super.followingsCount,
+    super.lastLoginAt,
+    super.settings,
+    super.createdAt,
+    super.updatedAt,
+    super.userType,
+  });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final base = User.fromJson(json);
@@ -57,8 +40,10 @@ class UserModel extends User {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() => super.toJson();
 
+  @override
   UserModel copyWith({
     String? id,
     String? name,

@@ -4,6 +4,11 @@ import 'package:musee/core/common/entities/user.dart';
 import 'package:musee/features/admin_users/presentation/bloc/admin_users_bloc.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';
+import 'package:musee/features/admin_users/presentation/widgets/admin_user_search_bar.dart';
+import 'package:musee/features/admin_users/presentation/widgets/page_size_dropdown.dart';
+import 'package:musee/features/admin_users/presentation/widgets/users_table.dart';
+import 'package:musee/features/admin_users/presentation/widgets/users_list.dart';
+import 'package:musee/features/admin_users/presentation/widgets/pagination_controls.dart';
 
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
@@ -34,21 +39,12 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       builder: (ctx) => Dialog(
         child: _UserFormDialog(
           onSubmit:
-              (
-                name,
-                email,
-                subType,
-                userType,
-                planId,
-                avatarBytes,
-                avatarFilename,
-              ) {
+              (name, email, subType, planId, avatarBytes, avatarFilename) {
                 context.read<AdminUsersBloc>().add(
                   CreateUserEvent(
                     name: name,
                     email: email,
                     subscriptionType: subType,
-                    userType: userType,
                     planId: planId,
                     avatarBytes: avatarBytes?.toList(),
                     avatarFilename: avatarFilename,
@@ -67,22 +63,13 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         child: _UserFormDialog(
           user: user,
           onSubmit:
-              (
-                name,
-                email,
-                subType,
-                userType,
-                planId,
-                avatarBytes,
-                avatarFilename,
-              ) {
+              (name, email, subType, planId, avatarBytes, avatarFilename) {
                 context.read<AdminUsersBloc>().add(
                   UpdateUserEvent(
                     id: user.id,
                     name: name,
                     email: email,
                     subscriptionType: subType,
-                    userType: userType,
                     planId: planId,
                     avatarBytes: avatarBytes?.toList(),
                     avatarFilename: avatarFilename,
@@ -112,55 +99,80 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchCtrl,
-                    decoration: InputDecoration(
-                      hintText: 'Search by name or email',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onSubmitted: (value) {
-                      context.read<AdminUsersBloc>().add(
-                        LoadUsers(
-                          page: 1,
-                          limit: _limit,
-                          search: value.trim().isEmpty ? null : value.trim(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                DropdownButton<int>(
-                  value: _limit,
-                  onChanged: (v) {
-                    if (v == null) return;
-                    setState(() => _limit = v);
-                    context.read<AdminUsersBloc>().add(
-                      LoadUsers(
-                        page: 1,
-                        limit: v,
-                        search: _searchCtrl.text.trim().isEmpty
-                            ? null
-                            : _searchCtrl.text.trim(),
-                      ),
-                    );
-                  },
-                  items: const [10, 20, 50, 100]
-                      .map(
-                        (e) => DropdownMenuItem(
-                          value: e,
-                          child: Text('Page size: $e'),
-                        ),
+            LayoutBuilder(
+              builder: (context, c) {
+                final isMobile = c.maxWidth < 700;
+                return isMobile
+                    ? Column(
+                        children: [
+                          AdminUserSearchBar(
+                            controller: _searchCtrl,
+                            onSubmitted: (value) {
+                              context.read<AdminUsersBloc>().add(
+                                LoadUsers(
+                                  page: 1,
+                                  limit: _limit,
+                                  search: value.isEmpty ? null : value,
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: PageSizeDropdown(
+                              value: _limit,
+                              onChanged: (v) {
+                                setState(() => _limit = v);
+                                context.read<AdminUsersBloc>().add(
+                                  LoadUsers(
+                                    page: 1,
+                                    limit: v,
+                                    search: _searchCtrl.text.trim().isEmpty
+                                        ? null
+                                        : _searchCtrl.text.trim(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
                       )
-                      .toList(),
-                ),
-              ],
+                    : Row(
+                        children: [
+                          Expanded(
+                            child: AdminUserSearchBar(
+                              controller: _searchCtrl,
+                              onSubmitted: (value) {
+                                context.read<AdminUsersBloc>().add(
+                                  LoadUsers(
+                                    page: 1,
+                                    limit: _limit,
+                                    search: value.isEmpty ? null : value,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          PageSizeDropdown(
+                            value: _limit,
+                            onChanged: (v) {
+                              setState(() => _limit = v);
+                              context.read<AdminUsersBloc>().add(
+                                LoadUsers(
+                                  page: 1,
+                                  limit: v,
+                                  search: _searchCtrl.text.trim().isEmpty
+                                      ? null
+                                      : _searchCtrl.text.trim(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      );
+              },
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -204,138 +216,86 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       1,
                       999999,
                     );
-                    return Column(
-                      children: [
-                        Expanded(
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(minWidth: 800),
-                              child: SingleChildScrollView(
-                                child: DataTable(
-                                  columns: const [
-                                    DataColumn(label: Text('Avatar')),
-                                    DataColumn(label: Text('Name')),
-                                    DataColumn(label: Text('Email')),
-                                    DataColumn(label: Text('Type')),
-                                    DataColumn(label: Text('Subscription')),
-                                    DataColumn(label: Text('Last login')),
-                                    DataColumn(label: Text('Actions')),
-                                  ],
-                                  rows: users.map((u) {
-                                    return DataRow(
-                                      cells: [
-                                        DataCell(
-                                          CircleAvatar(
-                                            radius: 16,
-                                            backgroundImage:
-                                                u.avatarUrl.isNotEmpty
-                                                ? NetworkImage(u.avatarUrl)
-                                                : null,
-                                            child: u.avatarUrl.isEmpty
-                                                ? Text(
-                                                    u.name.isNotEmpty
-                                                        ? u.name[0]
-                                                              .toUpperCase()
-                                                        : '?',
-                                                  )
-                                                : null,
-                                          ),
-                                        ),
-                                        DataCell(Text(u.name)),
-                                        DataCell(Text(u.email ?? '—')),
-                                        DataCell(Text(u.userType.value)),
-                                        DataCell(
-                                          Text(u.subscriptionType.value),
-                                        ),
-                                        DataCell(
-                                          Text(
-                                            u.lastLoginAt
-                                                    ?.toLocal()
-                                                    .toString()
-                                                    .split('.')
-                                                    .first ??
-                                                '—',
-                                          ),
-                                        ),
-                                        DataCell(
-                                          Row(
-                                            children: [
-                                              IconButton(
-                                                tooltip: 'Edit',
-                                                icon: const Icon(Icons.edit),
+                    return LayoutBuilder(
+                      builder: (context, c) {
+                        final isMobile = c.maxWidth < 700;
+                        return Column(
+                          children: [
+                            Expanded(
+                              child: isMobile
+                                  ? UsersList(
+                                      users: users,
+                                      onEdit: _openEditDialog,
+                                      onDelete: (u) async {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: const Text('Delete user?'),
+                                            content: Text(
+                                              'Are you sure you want to delete ${u.name}? This cannot be undone.',
+                                            ),
+                                            actions: [
+                                              TextButton(
                                                 onPressed: () =>
-                                                    _openEditDialog(u),
+                                                    Navigator.pop(ctx, false),
+                                                child: const Text('Cancel'),
                                               ),
-                                              IconButton(
-                                                tooltip: 'Delete',
-                                                icon: const Icon(
-                                                  Icons.delete_outline,
-                                                ),
-                                                onPressed: () async {
-                                                  final confirm =
-                                                      await showDialog<bool>(
-                                                        context: context,
-                                                        builder: (ctx) => AlertDialog(
-                                                          title: const Text(
-                                                            'Delete user?',
-                                                          ),
-                                                          content: Text(
-                                                            'Are you sure you want to delete ${u.name}? This cannot be undone.',
-                                                          ),
-                                                          actions: [
-                                                            TextButton(
-                                                              onPressed: () =>
-                                                                  Navigator.pop(
-                                                                    ctx,
-                                                                    false,
-                                                                  ),
-                                                              child: const Text(
-                                                                'Cancel',
-                                                              ),
-                                                            ),
-                                                            FilledButton(
-                                                              onPressed: () =>
-                                                                  Navigator.pop(
-                                                                    ctx,
-                                                                    true,
-                                                                  ),
-                                                              child: const Text(
-                                                                'Delete',
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                  if (confirm == true) {
-                                                    context
-                                                        .read<AdminUsersBloc>()
-                                                        .add(
-                                                          DeleteUserEvent(u.id),
-                                                        );
-                                                  }
-                                                },
+                                              FilledButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, true),
+                                                child: const Text('Delete'),
                                               ),
                                             ],
                                           ),
-                                        ),
-                                      ],
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
+                                        );
+                                        if (confirm == true) {
+                                          context.read<AdminUsersBloc>().add(
+                                            DeleteUserEvent(u.id),
+                                          );
+                                        }
+                                      },
+                                    )
+                                  : UsersTable(
+                                      users: users,
+                                      onEdit: _openEditDialog,
+                                      onDelete: (u) async {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: const Text('Delete user?'),
+                                            content: Text(
+                                              'Are you sure you want to delete ${u.name}? This cannot be undone.',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, false),
+                                                child: const Text('Cancel'),
+                                              ),
+                                              FilledButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, true),
+                                                child: const Text('Delete'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm == true) {
+                                          context.read<AdminUsersBloc>().add(
+                                            DeleteUserEvent(u.id),
+                                          );
+                                        }
+                                      },
+                                    ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Total: ${state.total}'),
+                            const SizedBox(height: 8),
                             Row(
                               children: [
-                                IconButton(
-                                  onPressed: state.page > 1
+                                Expanded(child: Text('Total: ${state.total}')),
+                                PaginationControls(
+                                  page: state.page,
+                                  totalPages: totalPages,
+                                  onPrev: state.page > 1
                                       ? () =>
                                             context.read<AdminUsersBloc>().add(
                                               LoadUsers(
@@ -345,11 +305,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                                               ),
                                             )
                                       : null,
-                                  icon: const Icon(Icons.chevron_left),
-                                ),
-                                Text('Page ${state.page} of $totalPages'),
-                                IconButton(
-                                  onPressed: state.page < totalPages
+                                  onNext: state.page < totalPages
                                       ? () =>
                                             context.read<AdminUsersBloc>().add(
                                               LoadUsers(
@@ -359,13 +315,12 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                                               ),
                                             )
                                       : null,
-                                  icon: const Icon(Icons.chevron_right),
                                 ),
                               ],
                             ),
                           ],
-                        ),
-                      ],
+                        );
+                      },
                     );
                   }
                   return const SizedBox.shrink();
@@ -385,7 +340,6 @@ class _UserFormDialog extends StatefulWidget {
     String name,
     String email,
     SubscriptionType subType,
-    UserType userType,
     String? planId,
     Uint8List? avatarBytes,
     String? avatarFilename,
@@ -404,7 +358,6 @@ class _UserFormDialogState extends State<_UserFormDialog> {
   late TextEditingController _emailCtrl;
   late TextEditingController _planCtrl;
   SubscriptionType _subscriptionType = SubscriptionType.free;
-  UserType _userType = UserType.listener;
   Uint8List? _avatarBytes;
   String? _avatarFilename;
 
@@ -415,7 +368,6 @@ class _UserFormDialogState extends State<_UserFormDialog> {
     _emailCtrl = TextEditingController(text: widget.user?.email ?? '');
     _planCtrl = TextEditingController(text: widget.user?.planId ?? '');
     _subscriptionType = widget.user?.subscriptionType ?? SubscriptionType.free;
-    _userType = widget.user?.userType ?? UserType.listener;
   }
 
   @override
@@ -531,7 +483,7 @@ class _UserFormDialogState extends State<_UserFormDialog> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<SubscriptionType>(
-                value: _subscriptionType,
+                initialValue: _subscriptionType,
                 items: SubscriptionType.values
                     .map(
                       (e) => DropdownMenuItem(value: e, child: Text(e.value)),
@@ -544,16 +496,7 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                 ),
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<UserType>(
-                value: _userType,
-                items: UserType.values
-                    .map(
-                      (e) => DropdownMenuItem(value: e, child: Text(e.value)),
-                    )
-                    .toList(),
-                onChanged: (v) => setState(() => _userType = v ?? _userType),
-                decoration: const InputDecoration(labelText: 'User Type'),
-              ),
+
               const SizedBox(height: 8),
               TextFormField(
                 controller: _planCtrl,
@@ -577,7 +520,6 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                         _nameCtrl.text.trim(),
                         _emailCtrl.text.trim(),
                         _subscriptionType,
-                        _userType,
                         _planCtrl.text.trim().isEmpty
                             ? null
                             : _planCtrl.text.trim(),

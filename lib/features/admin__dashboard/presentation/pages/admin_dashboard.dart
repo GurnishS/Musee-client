@@ -101,7 +101,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         icon: Icons.mic,
                         color: theme.colorScheme.secondary,
                         onTap: () {
-                          context.push("/admin/artists");
+                          context.push(Routes.adminArtists);
                         },
                       ),
                       AdminCard(
