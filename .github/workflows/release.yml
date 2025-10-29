@@ -71,7 +71,7 @@ jobs:
           elif [ "${{ matrix.platform }}" == "linux" ]; then
             zip -r dist/musee-linux.zip build/linux/x64/release/bundle/
           elif [ "${{ matrix.platform }}" == "windows" ]; then
-            powershell Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath dist/musee-windows.zip
+            powershell -Command "Compress-Archive -Path 'build/windows/x64/runner/Release/*' -DestinationPath 'dist/musee-windows.zip' -Force"
           elif [ "${{ matrix.platform }}" == "macos" ]; then
             zip -r dist/musee-macos.zip build/macos/Build/Products/Release/
           fi
