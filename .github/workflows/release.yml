@@ -32,6 +32,22 @@ jobs:
 
       - run: flutter pub get
 
+      - name: Create app_secrets.dart
+        shell: bash
+        run: |
+          mkdir -p lib/core/secrets
+          cat > lib/core/secrets/app_secrets.dart <<'EOF'
+          class AppSecrets {
+            // Environment configuration
+            static const bool isProduction = true;
+
+            // Supabase configuration (safe for all platforms)
+            static const String supabaseUrl = "${{ secrets.SUPABASE_URL }}";
+            static const String supabaseAnonKey = "${{ secrets.SUPABASE_ANON_KEY }}";
+            static const String backendUrl = "${{ secrets.BACKEND_URL }}";
+          }
+          EOF
+
       - name: Build for ${{ matrix.platform }}
         run: |
           if [ "${{ matrix.platform }}" == "android" ]; then
