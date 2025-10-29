@@ -7,10 +7,8 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: [android, web, windows, linux]
         include:
           - platform: android
             os: ubuntu-latest
@@ -24,12 +22,13 @@ jobs:
             os: macos-latest
 
     runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: ' 3.35.4'
+          flutter-version: '3.35.4'
 
       - run: flutter pub get
 
@@ -43,6 +42,8 @@ jobs:
             flutter build linux --release
           elif [ "${{ matrix.platform }}" == "windows" ]; then
             flutter build windows --release
+          elif [ "${{ matrix.platform }}" == "macos" ]; then
+            flutter build macos --release
           fi
 
       - name: Upload Artifact
@@ -54,6 +55,7 @@ jobs:
             build/web/
             build/linux/x64/release/bundle/
             build/windows/x64/runner/Release/
+            build/macos/Build/Products/Release/
           if-no-files-found: ignore
 
   release:
