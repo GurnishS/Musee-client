@@ -26,8 +26,21 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.35.4'
+          flutter-version: '3.35.7'
+          channel: stable
           cache: true
+
+      - name: Enable Linux desktop
+        if: matrix.platform == 'linux'
+        run: flutter config --enable-linux-desktop
+
+      - name: Enable Windows desktop
+        if: matrix.platform == 'windows'
+        run: flutter config --enable-windows-desktop
+
+      - name: Enable macOS desktop
+        if: matrix.platform == 'macos'
+        run: flutter config --enable-macos-desktop
 
       - run: flutter pub get
 

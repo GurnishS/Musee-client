@@ -14,9 +14,10 @@ import 'package:musee/features/admin_albums/presentation/bloc/admin_albums_bloc.
 import 'package:musee/features/admin_albums/presentation/pages/admin_albums_page.dart';
 import 'package:musee/features/admin_plans/presentation/pages/admin_plans_page.dart';
 import 'package:musee/features/admin_plans/presentation/bloc/admin_plans_bloc.dart';
+import 'package:musee/features/admin_tracks/presentation/pages/admin_tracks_page.dart';
+import 'package:musee/features/admin_tracks/presentation/bloc/admin_tracks_bloc.dart';
 import 'package:musee/init_dependencies.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
 
@@ -111,6 +112,15 @@ class AppGoRouter {
           builder: (context, state) => BlocProvider(
             create: (_) => serviceLocator<AdminPlansBloc>(),
             child: const AdminPlansPage(),
+          ),
+        ),
+
+        GoRoute(
+          path: Routes.adminTracks,
+          name: 'admin_tracks',
+          builder: (context, state) => BlocProvider(
+            create: (_) => serviceLocator<AdminTracksBloc>(),
+            child: const AdminTracksPage(),
           ),
         ),
 

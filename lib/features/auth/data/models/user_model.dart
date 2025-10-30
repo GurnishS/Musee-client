@@ -40,8 +40,6 @@ class UserModel extends User {
     );
   }
 
-  @override
-  Map<String, dynamic> toJson() => super.toJson();
 
   @override
   UserModel copyWith({

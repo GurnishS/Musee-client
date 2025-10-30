@@ -51,6 +51,15 @@ import 'package:musee/features/admin_plans/domain/usecases/create_plan.dart';
 import 'package:musee/features/admin_plans/domain/usecases/update_plan.dart';
 import 'package:musee/features/admin_plans/domain/usecases/delete_plan.dart';
 import 'package:musee/features/admin_plans/presentation/bloc/admin_plans_bloc.dart';
+import 'package:musee/features/admin_tracks/data/datasources/admin_tracks_remote_data_source.dart';
+import 'package:musee/features/admin_tracks/data/repositories/admin_tracks_repository_impl.dart';
+import 'package:musee/features/admin_tracks/domain/repository/admin_tracks_repository.dart';
+import 'package:musee/features/admin_tracks/domain/usecases/list_tracks.dart';
+import 'package:musee/features/admin_tracks/domain/usecases/get_track.dart';
+import 'package:musee/features/admin_tracks/domain/usecases/create_track.dart';
+import 'package:musee/features/admin_tracks/domain/usecases/update_track.dart';
+import 'package:musee/features/admin_tracks/domain/usecases/delete_track.dart';
+import 'package:musee/features/admin_tracks/presentation/bloc/admin_tracks_bloc.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -77,6 +86,8 @@ Future<void> initDependencies() async {
   _initAdminAlbums();
   // admin plans
   _initAdminPlans();
+  // admin tracks
+  _initAdminTracks();
 }
 
 void _initAuth() {
@@ -221,6 +232,36 @@ void _initAdminPlans() {
     // bloc
     ..registerFactory(
       () => AdminPlansBloc(
+        list: serviceLocator(),
+        create: serviceLocator(),
+        update: serviceLocator(),
+        delete: serviceLocator(),
+      ),
+    );
+}
+
+void _initAdminTracks() {
+  serviceLocator
+    // datasource
+    ..registerLazySingleton<AdminTracksRemoteDataSource>(
+      () => AdminTracksRemoteDataSourceImpl(
+        serviceLocator<Dio>(),
+        serviceLocator(),
+      ),
+    )
+    // repository
+    ..registerLazySingleton<AdminTracksRepository>(
+      () => AdminTracksRepositoryImpl(serviceLocator()),
+    )
+    // use cases
+    ..registerFactory(() => ListTracks(serviceLocator()))
+    ..registerFactory(() => GetTrack(serviceLocator()))
+    ..registerFactory(() => CreateTrack(serviceLocator()))
+    ..registerFactory(() => UpdateTrack(serviceLocator()))
+    ..registerFactory(() => DeleteTrack(serviceLocator()))
+    // bloc
+    ..registerFactory(
+      () => AdminTracksBloc(
         list: serviceLocator(),
         create: serviceLocator(),
         update: serviceLocator(),

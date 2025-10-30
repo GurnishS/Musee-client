@@ -16,6 +16,7 @@ class AdminArtistsPage extends StatefulWidget {
 class _AdminArtistsPageState extends State<AdminArtistsPage> {
   final TextEditingController _searchCtrl = TextEditingController();
   int _limit = 20;
+  Artist? _selectedArtist;
 
   @override
   void initState() {
@@ -171,7 +172,9 @@ class _AdminArtistsPageState extends State<AdminArtistsPage> {
                                               : null,
                                         ),
                                         title: Text(a.name),
-                                        subtitle: Text(a.bio),
+                                        selected: _selectedArtist?.id == a.id,
+                                        onTap: () =>
+                                            setState(() => _selectedArtist = a),
                                         trailing: Wrap(
                                           spacing: 4,
                                           children: [
@@ -242,12 +245,14 @@ class _AdminArtistsPageState extends State<AdminArtistsPage> {
                                   columns: const [
                                     DataColumn(label: Text('Avatar')),
                                     DataColumn(label: Text('Name')),
-                                    DataColumn(label: Text('Bio')),
                                     DataColumn(label: Text('Created')),
                                     DataColumn(label: Text('Actions')),
                                   ],
                                   rows: artists.map((a) {
                                     return DataRow(
+                                      selected: _selectedArtist?.id == a.id,
+                                      onSelectChanged: (_) =>
+                                          setState(() => _selectedArtist = a),
                                       cells: [
                                         DataCell(
                                           CircleAvatar(
@@ -266,7 +271,6 @@ class _AdminArtistsPageState extends State<AdminArtistsPage> {
                                           ),
                                         ),
                                         DataCell(Text(a.name)),
-                                        DataCell(Text(a.bio)),
                                         DataCell(
                                           Text(
                                             a.createdAt
@@ -348,6 +352,10 @@ class _AdminArtistsPageState extends State<AdminArtistsPage> {
                             },
                           ),
                         ),
+                        if (_selectedArtist != null) ...[
+                          const SizedBox(height: 12),
+                          _ArtistDetails(artist: _selectedArtist!),
+                        ],
                         const SizedBox(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -394,6 +402,74 @@ class _AdminArtistsPageState extends State<AdminArtistsPage> {
                   return const SizedBox.shrink();
                 },
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ArtistDetails extends StatelessWidget {
+  final Artist artist;
+  const _ArtistDetails({required this.artist});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundImage: artist.avatarUrl != null
+                      ? NetworkImage(artist.avatarUrl!)
+                      : null,
+                  child: artist.avatarUrl == null
+                      ? const Icon(Icons.person)
+                      : null,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(artist.name, style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Created: '
+                        '${artist.createdAt?.toLocal().toString().split('.').first ?? '—'}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (artist.coverUrl != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  artist.coverUrl!,
+                  height: 160,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            if (artist.coverUrl != null) const SizedBox(height: 12),
+            Text('Bio', style: theme.textTheme.titleSmall),
+            const SizedBox(height: 6),
+            SelectableText(
+              artist.bio.isNotEmpty ? artist.bio : '—',
+              style: theme.textTheme.bodyMedium,
             ),
           ],
         ),
