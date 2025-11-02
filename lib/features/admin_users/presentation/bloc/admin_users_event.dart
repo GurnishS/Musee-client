@@ -6,7 +6,7 @@ final class LoadUsers extends AdminUsersEvent {
   final int page;
   final int limit;
   final String? search;
-  LoadUsers({this.page = 1, this.limit = 20, this.search});
+  LoadUsers({this.page = 0, this.limit = 20, this.search});
 }
 
 final class CreateUserEvent extends AdminUsersEvent {

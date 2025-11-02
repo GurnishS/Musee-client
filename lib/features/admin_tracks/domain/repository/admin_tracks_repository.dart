@@ -15,12 +15,11 @@ abstract class AdminTracksRepository {
     String? lyricsUrl,
     bool? isExplicit,
     bool? isPublished,
-    List<int>? audioBytes,
-    String? audioFilename,
-    List<int>? coverBytes,
-    String? coverFilename,
+    required List<int> audioBytes,
+    required String audioFilename,
     List<int>? videoBytes,
     String? videoFilename,
+    List<Map<String, String>>? artists,
   });
 
   Future<Either<Failure, Track>> updateTrack({
@@ -33,11 +32,28 @@ abstract class AdminTracksRepository {
     bool? isPublished,
     List<int>? audioBytes,
     String? audioFilename,
-    List<int>? coverBytes,
-    String? coverFilename,
     List<int>? videoBytes,
     String? videoFilename,
+    List<Map<String, String>>? artists,
   });
 
   Future<Either<Failure, void>> deleteTrack(String id);
+
+  // Artist management
+  Future<Either<Failure, void>> linkArtistToTrack({
+    required String trackId,
+    required String artistId,
+    required String role, // owner|editor|viewer
+  });
+
+  Future<Either<Failure, void>> updateTrackArtistRole({
+    required String trackId,
+    required String artistId,
+    required String role, // owner|editor|viewer
+  });
+
+  Future<Either<Failure, void>> unlinkArtistFromTrack({
+    required String trackId,
+    required String artistId,
+  });
 }

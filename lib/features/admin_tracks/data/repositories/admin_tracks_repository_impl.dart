@@ -46,12 +46,11 @@ class AdminTracksRepositoryImpl implements AdminTracksRepository {
     String? lyricsUrl,
     bool? isExplicit,
     bool? isPublished,
-    List<int>? audioBytes,
-    String? audioFilename,
-    List<int>? coverBytes,
-    String? coverFilename,
+    required List<int> audioBytes,
+    required String audioFilename,
     List<int>? videoBytes,
     String? videoFilename,
+    List<Map<String, String>>? artists,
   }) async {
     try {
       final t = await remote.createTrack(
@@ -61,12 +60,11 @@ class AdminTracksRepositoryImpl implements AdminTracksRepository {
         lyricsUrl: lyricsUrl,
         isExplicit: isExplicit,
         isPublished: isPublished,
-        audioBytes: audioBytes != null ? Uint8List.fromList(audioBytes) : null,
+        audioBytes: Uint8List.fromList(audioBytes),
         audioFilename: audioFilename,
-        coverBytes: coverBytes != null ? Uint8List.fromList(coverBytes) : null,
-        coverFilename: coverFilename,
         videoBytes: videoBytes != null ? Uint8List.fromList(videoBytes) : null,
         videoFilename: videoFilename,
+        artists: artists,
       );
       return right(t);
     } on DioException catch (e) {
@@ -87,10 +85,9 @@ class AdminTracksRepositoryImpl implements AdminTracksRepository {
     bool? isPublished,
     List<int>? audioBytes,
     String? audioFilename,
-    List<int>? coverBytes,
-    String? coverFilename,
     List<int>? videoBytes,
     String? videoFilename,
+    List<Map<String, String>>? artists,
   }) async {
     try {
       final t = await remote.updateTrack(
@@ -103,10 +100,9 @@ class AdminTracksRepositoryImpl implements AdminTracksRepository {
         isPublished: isPublished,
         audioBytes: audioBytes != null ? Uint8List.fromList(audioBytes) : null,
         audioFilename: audioFilename,
-        coverBytes: coverBytes != null ? Uint8List.fromList(coverBytes) : null,
-        coverFilename: coverFilename,
         videoBytes: videoBytes != null ? Uint8List.fromList(videoBytes) : null,
         videoFilename: videoFilename,
+        artists: artists,
       );
       return right(t);
     } on DioException catch (e) {
@@ -120,6 +116,61 @@ class AdminTracksRepositoryImpl implements AdminTracksRepository {
   Future<Either<Failure, void>> deleteTrack(String id) async {
     try {
       await remote.deleteTrack(id);
+      return right(null);
+    } on DioException catch (e) {
+      return left(Failure(e.message ?? 'Network error'));
+    } catch (e) {
+      return left(Failure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> linkArtistToTrack({
+    required String trackId,
+    required String artistId,
+    required String role,
+  }) async {
+    try {
+      await remote.linkArtistToTrack(
+        trackId: trackId,
+        artistId: artistId,
+        role: role,
+      );
+      return right(null);
+    } on DioException catch (e) {
+      return left(Failure(e.message ?? 'Network error'));
+    } catch (e) {
+      return left(Failure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateTrackArtistRole({
+    required String trackId,
+    required String artistId,
+    required String role,
+  }) async {
+    try {
+      await remote.updateTrackArtistRole(
+        trackId: trackId,
+        artistId: artistId,
+        role: role,
+      );
+      return right(null);
+    } on DioException catch (e) {
+      return left(Failure(e.message ?? 'Network error'));
+    } catch (e) {
+      return left(Failure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> unlinkArtistFromTrack({
+    required String trackId,
+    required String artistId,
+  }) async {
+    try {
+      await remote.unlinkArtistFromTrack(trackId: trackId, artistId: artistId);
       return right(null);
     } on DioException catch (e) {
       return left(Failure(e.message ?? 'Network error'));

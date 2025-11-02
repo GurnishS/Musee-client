@@ -15,18 +15,21 @@ class PaginationControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayedPage = totalPages == 0
+        ? 0
+        : page + 1; // convert from 0-based for display
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('Page $page of $totalPages'),
+        Text('Page $displayedPage of $totalPages'),
         Row(
           children: [
             IconButton(
-              onPressed: page > 1 ? onPrev : null,
+              onPressed: page > 0 ? onPrev : null,
               icon: const Icon(Icons.chevron_left),
             ),
             IconButton(
-              onPressed: page < totalPages ? onNext : null,
+              onPressed: page < (totalPages - 1) ? onNext : null,
               icon: const Icon(Icons.chevron_right),
             ),
           ],

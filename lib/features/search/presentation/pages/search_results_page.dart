@@ -6,6 +6,7 @@ import 'package:musee/init_dependencies.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:musee/core/common/widgets/bottom_nav_bar.dart';
 
 /// Search results page displaying search results grouped by extractors
 /// Features horizontal scrollable sections for each platform (YouTube, etc.)
@@ -43,7 +44,11 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: _buildAppBar(), body: _buildBody());
+    return Scaffold(
+      appBar: _buildAppBar(),
+      body: _buildBody(),
+      bottomNavigationBar: const BottomNavBar(selectedIndex: 1),
+    );
   }
 
   /// Builds app bar with search field

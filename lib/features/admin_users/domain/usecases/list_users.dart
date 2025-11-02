@@ -26,5 +26,5 @@ class ListUsersParams {
   final int limit;
   final String? search;
 
-  const ListUsersParams({this.page = 1, this.limit = 20, this.search});
+  const ListUsersParams({this.page = 0, this.limit = 20, this.search});
 }

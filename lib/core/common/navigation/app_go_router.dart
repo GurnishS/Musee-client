@@ -6,6 +6,8 @@ import 'package:musee/features/auth/presentation/pages/sign_in_page.dart';
 import 'package:musee/features/auth/presentation/pages/sign_up_page.dart';
 import 'package:musee/features/user__dashboard/presentation/pages/user_dashboard.dart';
 import 'package:musee/features/admin_users/presentation/pages/admin_users_page.dart';
+import 'package:musee/features/admin_users/presentation/pages/admin_user_create_page.dart';
+import 'package:musee/features/admin_users/presentation/pages/admin_user_detail_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:musee/features/admin_users/presentation/bloc/admin_users_bloc.dart';
 import 'package:musee/features/admin_artists/presentation/pages/admin_artists_page.dart';
@@ -20,6 +22,8 @@ import 'package:musee/init_dependencies.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
+import 'package:musee/features/user_albums/presentation/pages/user_album_page.dart';
+import 'package:musee/features/search/presentation/pages/search_page.dart';
 
 class AppGoRouter {
   static GoRouter createRouter(AppUserCubit appUserCubit) {
@@ -64,7 +68,8 @@ class AppGoRouter {
         // Legacy root -> redirect to canonical dashboard
         GoRoute(
           path: Routes.root,
-          redirect: (context, state) => Routes.dashboard,
+          redirect: (context, state) =>
+              isAdmin ? Routes.adminArtists : Routes.dashboard,
         ),
 
         GoRoute(
@@ -86,6 +91,21 @@ class AppGoRouter {
             create: (_) => serviceLocator<AdminUsersBloc>(),
             child: const AdminUsersPage(),
           ),
+        ),
+
+        GoRoute(
+          path: Routes.adminUserCreate,
+          name: 'admin_user_create',
+          builder: (context, state) => const AdminUserCreatePage(),
+        ),
+
+        GoRoute(
+          path: Routes.adminUserDetail,
+          name: 'admin_user_detail',
+          builder: (context, state) {
+            final id = state.pathParameters['id'] ?? '';
+            return AdminUserDetailPage(userId: id);
+          },
         ),
 
         GoRoute(
@@ -144,6 +164,22 @@ class AppGoRouter {
                 state.uri.queryParameters['redirect'] ?? Routes.dashboard;
             return SignUpPage(redirectUrl: redirectUrl);
           },
+        ),
+
+        GoRoute(
+          path: Routes.userAlbum,
+          name: 'user_album',
+          builder: (context, state) {
+            final id = state.pathParameters['id'] ?? '';
+            return UserAlbumPage(albumId: id);
+          },
+        ),
+
+        // Search entry via GoRouter (used by BottomNavBar)
+        GoRoute(
+          path: '/search',
+          name: 'search',
+          builder: (context, state) => const SearchPage(),
         ),
 
         GoRoute(

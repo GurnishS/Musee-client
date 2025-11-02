@@ -11,12 +11,11 @@ class CreateTrackParams {
   final String? lyricsUrl;
   final bool? isExplicit;
   final bool? isPublished;
-  final List<int>? audioBytes;
-  final String? audioFilename;
-  final List<int>? coverBytes;
-  final String? coverFilename;
+  final List<int> audioBytes;
+  final String audioFilename;
   final List<int>? videoBytes;
   final String? videoFilename;
+  final List<Map<String, String>>? artists; // [{artist_id, role}]
 
   const CreateTrackParams({
     required this.title,
@@ -25,12 +24,11 @@ class CreateTrackParams {
     this.lyricsUrl,
     this.isExplicit,
     this.isPublished,
-    this.audioBytes,
-    this.audioFilename,
-    this.coverBytes,
-    this.coverFilename,
+    required this.audioBytes,
+    required this.audioFilename,
     this.videoBytes,
     this.videoFilename,
+    this.artists,
   });
 }
 
@@ -49,10 +47,9 @@ class CreateTrack implements UseCase<Track, CreateTrackParams> {
       isPublished: params.isPublished,
       audioBytes: params.audioBytes,
       audioFilename: params.audioFilename,
-      coverBytes: params.coverBytes,
-      coverFilename: params.coverFilename,
       videoBytes: params.videoBytes,
       videoFilename: params.videoFilename,
+      artists: params.artists,
     );
   }
 }

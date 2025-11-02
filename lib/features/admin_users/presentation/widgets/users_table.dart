@@ -31,6 +31,7 @@ class UsersTable extends StatelessWidget {
             ],
             rows: users.map((u) {
               return DataRow(
+                onSelectChanged: (_) => onEdit(u),
                 cells: [
                   DataCell(
                     CircleAvatar(

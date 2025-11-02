@@ -14,7 +14,7 @@ class AdminRepositoryImpl implements AdminRepository {
 
   @override
   Future<Either<Failure, (List<User> items, int total, int page, int limit)>>
-  listUsers({int page = 1, int limit = 20, String? search}) async {
+  listUsers({int page = 0, int limit = 20, String? search}) async {
     try {
       final result = await remote.listUsers(
         page: page,

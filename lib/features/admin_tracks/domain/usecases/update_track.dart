@@ -14,10 +14,9 @@ class UpdateTrackParams {
   final bool? isPublished;
   final List<int>? audioBytes;
   final String? audioFilename;
-  final List<int>? coverBytes;
-  final String? coverFilename;
   final List<int>? videoBytes;
   final String? videoFilename;
+  final List<Map<String, String>>? artists;
 
   const UpdateTrackParams({
     required this.id,
@@ -29,10 +28,9 @@ class UpdateTrackParams {
     this.isPublished,
     this.audioBytes,
     this.audioFilename,
-    this.coverBytes,
-    this.coverFilename,
     this.videoBytes,
     this.videoFilename,
+    this.artists,
   });
 }
 
@@ -52,10 +50,9 @@ class UpdateTrack implements UseCase<Track, UpdateTrackParams> {
       isPublished: params.isPublished,
       audioBytes: params.audioBytes,
       audioFilename: params.audioFilename,
-      coverBytes: params.coverBytes,
-      coverFilename: params.coverFilename,
       videoBytes: params.videoBytes,
       videoFilename: params.videoFilename,
+      artists: params.artists,
     );
   }
 }

@@ -31,6 +31,7 @@ class UsersList extends StatelessWidget {
               horizontal: 12,
               vertical: 8,
             ),
+            onTap: () => onEdit(u),
             leading: CircleAvatar(
               radius: 22,
               backgroundImage: u.avatarUrl.isNotEmpty
@@ -52,8 +53,7 @@ class UsersList extends StatelessWidget {
                   style: theme.textTheme.bodySmall,
                 ),
                 Text(
-                  'Last: ${u.lastLoginAt?.toLocal().toString().split('.').first ??
-                          '—'}',
+                  'Last: ${u.lastLoginAt?.toLocal().toString().split('.').first ?? '—'}',
                   style: theme.textTheme.bodySmall,
                 ),
               ],

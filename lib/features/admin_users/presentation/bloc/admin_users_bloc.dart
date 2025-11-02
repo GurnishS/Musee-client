@@ -76,7 +76,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
       (failure) async => emit(AdminUsersFailure(failure.message)),
       (_) async {
         final stateBefore = state;
-        int page = 1, limit = 20;
+        int page = 0, limit = 20;
         String? search;
         if (stateBefore is AdminUsersPageLoaded) {
           page = stateBefore.page;
@@ -122,7 +122,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
       (failure) async => emit(AdminUsersFailure(failure.message)),
       (_) async {
         final stateBefore = state;
-        int page = 1, limit = 20;
+        int page = 0, limit = 20;
         String? search;
         if (stateBefore is AdminUsersPageLoaded) {
           page = stateBefore.page;
@@ -158,7 +158,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
       (failure) async => emit(AdminUsersFailure(failure.message)),
       (_) async {
         final stateBefore = state;
-        int page = 1, limit = 20;
+        int page = 0, limit = 20;
         String? search;
         if (stateBefore is AdminUsersPageLoaded) {
           page = stateBefore.page;

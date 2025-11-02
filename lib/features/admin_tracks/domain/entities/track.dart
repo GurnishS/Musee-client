@@ -13,7 +13,7 @@ class TrackArtist {
 }
 
 class TrackAudio {
-  final int id;
+  final String id;
   final String ext;
   final int bitrate;
   final String path;
@@ -32,7 +32,6 @@ class Track {
   final String trackId;
   final String title;
   final String? albumId;
-  final String? coverUrl;
   final String? lyricsUrl;
   final int duration;
   final int playCount;
@@ -50,7 +49,6 @@ class Track {
     required this.trackId,
     required this.title,
     this.albumId,
-    this.coverUrl,
     this.lyricsUrl,
     required this.duration,
     required this.playCount,

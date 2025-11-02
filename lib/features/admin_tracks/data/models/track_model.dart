@@ -5,7 +5,6 @@ class TrackModel extends Track {
     required super.trackId,
     required super.title,
     super.albumId,
-    super.coverUrl,
     super.lyricsUrl,
     required super.duration,
     required super.playCount,
@@ -34,7 +33,7 @@ class TrackModel extends Track {
     final audiosList = (json['audios'] as List? ?? []).map((e) {
       final m = Map<String, dynamic>.from(e);
       return TrackAudio(
-        id: (m['id'] as num?)?.toInt() ?? 0,
+        id: m['id']?.toString() ?? '',
         ext: m['ext']?.toString() ?? '',
         bitrate: (m['bitrate'] as num?)?.toInt() ?? 0,
         path: m['path']?.toString() ?? '',
@@ -48,7 +47,6 @@ class TrackModel extends Track {
       trackId: json['track_id']?.toString() ?? json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
       albumId: json['album_id']?.toString(),
-      coverUrl: json['cover_url'] as String?,
       lyricsUrl: json['lyrics_url'] as String?,
       duration: (json['duration'] as num?)?.toInt() ?? 0,
       playCount: (json['play_count'] as num?)?.toInt() ?? 0,

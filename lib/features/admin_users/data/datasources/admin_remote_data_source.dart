@@ -53,7 +53,7 @@ class AdminRemoteDataSourceImpl implements AdminRemoteDataSource {
 
   @override
   Future<(List<User> items, int total, int page, int limit)> listUsers({
-    int page = 1,
+    int page = 0,
     int limit = 20,
     String? search,
   }) async {

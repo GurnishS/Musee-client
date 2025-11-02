@@ -59,7 +59,16 @@ import 'package:musee/features/admin_tracks/domain/usecases/get_track.dart';
 import 'package:musee/features/admin_tracks/domain/usecases/create_track.dart';
 import 'package:musee/features/admin_tracks/domain/usecases/update_track.dart';
 import 'package:musee/features/admin_tracks/domain/usecases/delete_track.dart';
+import 'package:musee/features/admin_tracks/domain/usecases/link_track_artist.dart';
+import 'package:musee/features/admin_tracks/domain/usecases/update_track_artist_role.dart';
+import 'package:musee/features/admin_tracks/domain/usecases/unlink_track_artist.dart';
 import 'package:musee/features/admin_tracks/presentation/bloc/admin_tracks_bloc.dart';
+import 'package:musee/core/player/player_cubit.dart';
+import 'package:musee/features/user_albums/data/datasources/user_albums_remote_data_source.dart';
+import 'package:musee/features/user_albums/data/repositories/user_albums_repository_impl.dart';
+import 'package:musee/features/user_albums/domain/repository/user_albums_repository.dart';
+import 'package:musee/features/user_albums/domain/usecases/get_user_album.dart';
+import 'package:musee/features/user_albums/presentation/bloc/user_album_bloc.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -75,6 +84,7 @@ Future<void> initDependencies() async {
 
   //core
   serviceLocator.registerLazySingleton(() => AppUserCubit());
+  serviceLocator.registerLazySingleton(() => PlayerCubit());
 
   //auth
   _initAuth();
@@ -88,6 +98,8 @@ Future<void> initDependencies() async {
   _initAdminPlans();
   // admin tracks
   _initAdminTracks();
+  // user features
+  _initUserAlbums();
 }
 
 void _initAuth() {
@@ -259,6 +271,9 @@ void _initAdminTracks() {
     ..registerFactory(() => CreateTrack(serviceLocator()))
     ..registerFactory(() => UpdateTrack(serviceLocator()))
     ..registerFactory(() => DeleteTrack(serviceLocator()))
+    ..registerFactory(() => LinkTrackArtist(serviceLocator()))
+    ..registerFactory(() => UpdateTrackArtistRole(serviceLocator()))
+    ..registerFactory(() => UnlinkTrackArtist(serviceLocator()))
     // bloc
     ..registerFactory(
       () => AdminTracksBloc(
@@ -266,6 +281,32 @@ void _initAdminTracks() {
         create: serviceLocator(),
         update: serviceLocator(),
         delete: serviceLocator(),
+        linkArtist: serviceLocator(),
+        updateArtistRole: serviceLocator(),
+        unlinkArtist: serviceLocator(),
       ),
     );
+}
+
+void _initUserAlbums() {
+  serviceLocator
+    // datasource
+    ..registerLazySingleton<UserAlbumsRemoteDataSource>(
+      () => UserAlbumsRemoteDataSourceImpl(
+        serviceLocator<Dio>(),
+        serviceLocator(),
+      ),
+    )
+    // repository
+    ..registerLazySingleton<UserAlbumsRepository>(
+      () => UserAlbumsRepositoryImpl(
+        serviceLocator<UserAlbumsRemoteDataSource>(),
+      ),
+    )
+    // use cases
+    ..registerFactory(
+      () => GetUserAlbum(serviceLocator<UserAlbumsRepository>()),
+    )
+    // bloc
+    ..registerFactory(() => UserAlbumBloc(serviceLocator<GetUserAlbum>()));
 }

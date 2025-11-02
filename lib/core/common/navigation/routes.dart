@@ -5,6 +5,8 @@ class Routes {
   // Admin dashboard
   static const String adminDashboard = '/admin';
   static const String adminUsers = '/admin/users';
+  static const String adminUserCreate = '/admin/users/create-new';
+  static const String adminUserDetail = '/admin/users/:id';
   static const String adminArtists = '/admin/artists';
   static const String adminAlbums = '/admin/albums';
   static const String adminPlans = '/admin/plans';
@@ -13,6 +15,9 @@ class Routes {
   // Authentication
   static const String signIn = '/sign-in';
   static const String signUp = '/sign-up';
+
+  // User album details
+  static const String userAlbum = '/albums/:id';
 
   // Forbidden / error
   static const String forbidden = '/forbidden';

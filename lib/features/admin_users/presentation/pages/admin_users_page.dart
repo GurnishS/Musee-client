@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:musee/core/common/entities/user.dart';
 import 'package:musee/features/admin_users/presentation/bloc/admin_users_bloc.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:typed_data';
 import 'package:musee/features/admin_users/presentation/widgets/admin_user_search_bar.dart';
 import 'package:musee/features/admin_users/presentation/widgets/page_size_dropdown.dart';
@@ -24,7 +25,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   @override
   void initState() {
     super.initState();
-    context.read<AdminUsersBloc>().add(LoadUsers(page: 1, limit: _limit));
+    context.read<AdminUsersBloc>().add(LoadUsers(page: 0, limit: _limit));
   }
 
   @override
@@ -33,53 +34,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     super.dispose();
   }
 
-  void _openCreateDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        child: _UserFormDialog(
-          onSubmit:
-              (name, email, subType, planId, avatarBytes, avatarFilename) {
-                context.read<AdminUsersBloc>().add(
-                  CreateUserEvent(
-                    name: name,
-                    email: email,
-                    subscriptionType: subType,
-                    planId: planId,
-                    avatarBytes: avatarBytes?.toList(),
-                    avatarFilename: avatarFilename,
-                  ),
-                );
-              },
-        ),
-      ),
-    );
-  }
+  void _goCreatePage() => context.go('/admin/users/create-new');
 
-  void _openEditDialog(User user) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        child: _UserFormDialog(
-          user: user,
-          onSubmit:
-              (name, email, subType, planId, avatarBytes, avatarFilename) {
-                context.read<AdminUsersBloc>().add(
-                  UpdateUserEvent(
-                    id: user.id,
-                    name: name,
-                    email: email,
-                    subscriptionType: subType,
-                    planId: planId,
-                    avatarBytes: avatarBytes?.toList(),
-                    avatarFilename: avatarFilename,
-                  ),
-                );
-              },
-        ),
-      ),
-    );
-  }
+  void _goDetail(User user) => context.go('/admin/users/${user.id}');
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +46,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         title: const Text('Admin • Users'),
         actions: [
           IconButton(
-            onPressed: _openCreateDialog,
+            onPressed: _goCreatePage,
             icon: const Icon(Icons.person_add_alt_1),
             tooltip: 'Create user',
           ),
@@ -110,7 +67,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                             onSubmitted: (value) {
                               context.read<AdminUsersBloc>().add(
                                 LoadUsers(
-                                  page: 1,
+                                  page: 0,
                                   limit: _limit,
                                   search: value.isEmpty ? null : value,
                                 ),
@@ -126,7 +83,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                                 setState(() => _limit = v);
                                 context.read<AdminUsersBloc>().add(
                                   LoadUsers(
-                                    page: 1,
+                                    page: 0,
                                     limit: v,
                                     search: _searchCtrl.text.trim().isEmpty
                                         ? null
@@ -146,7 +103,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                               onSubmitted: (value) {
                                 context.read<AdminUsersBloc>().add(
                                   LoadUsers(
-                                    page: 1,
+                                    page: 0,
                                     limit: _limit,
                                     search: value.isEmpty ? null : value,
                                   ),
@@ -161,7 +118,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                               setState(() => _limit = v);
                               context.read<AdminUsersBloc>().add(
                                 LoadUsers(
-                                  page: 1,
+                                  page: 0,
                                   limit: v,
                                   search: _searchCtrl.text.trim().isEmpty
                                       ? null
@@ -196,7 +153,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                           ElevatedButton.icon(
                             onPressed: () => context.read<AdminUsersBloc>().add(
                               LoadUsers(
-                                page: 1,
+                                page: 0,
                                 limit: _limit,
                                 search: _searchCtrl.text.trim().isEmpty
                                     ? null
@@ -225,7 +182,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                               child: isMobile
                                   ? UsersList(
                                       users: users,
-                                      onEdit: _openEditDialog,
+                                      onEdit: _goDetail,
                                       onDelete: (u) async {
                                         final confirm = await showDialog<bool>(
                                           context: context,
@@ -257,7 +214,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                                     )
                                   : UsersTable(
                                       users: users,
-                                      onEdit: _openEditDialog,
+                                      onEdit: _goDetail,
                                       onDelete: (u) async {
                                         final confirm = await showDialog<bool>(
                                           context: context,
@@ -293,9 +250,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                               children: [
                                 Expanded(child: Text('Total: ${state.total}')),
                                 PaginationControls(
-                                  page: state.page,
+                                  page: state.page, // zero-based
                                   totalPages: totalPages,
-                                  onPrev: state.page > 1
+                                  onPrev: state.page > 0
                                       ? () =>
                                             context.read<AdminUsersBloc>().add(
                                               LoadUsers(
@@ -305,7 +262,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                                               ),
                                             )
                                       : null,
-                                  onNext: state.page < totalPages
+                                  onNext: state.page < (totalPages - 1)
                                       ? () =>
                                             context.read<AdminUsersBloc>().add(
                                               LoadUsers(
@@ -335,7 +292,6 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 }
 
 class _UserFormDialog extends StatefulWidget {
-  final User? user;
   final void Function(
     String name,
     String email,
@@ -346,7 +302,7 @@ class _UserFormDialog extends StatefulWidget {
   )
   onSubmit;
 
-  const _UserFormDialog({this.user, required this.onSubmit});
+  const _UserFormDialog({required this.onSubmit});
 
   @override
   State<_UserFormDialog> createState() => _UserFormDialogState();
@@ -364,10 +320,10 @@ class _UserFormDialogState extends State<_UserFormDialog> {
   @override
   void initState() {
     super.initState();
-    _nameCtrl = TextEditingController(text: widget.user?.name ?? '');
-    _emailCtrl = TextEditingController(text: widget.user?.email ?? '');
-    _planCtrl = TextEditingController(text: widget.user?.planId ?? '');
-    _subscriptionType = widget.user?.subscriptionType ?? SubscriptionType.free;
+    _nameCtrl = TextEditingController(text: '');
+    _emailCtrl = TextEditingController(text: '');
+    _planCtrl = TextEditingController(text: '');
+    _subscriptionType = SubscriptionType.free;
   }
 
   @override
@@ -380,7 +336,7 @@ class _UserFormDialogState extends State<_UserFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isEdit = widget.user != null;
+    // legacy flag removed; dialog only supports create
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 480),
       child: Padding(
@@ -392,7 +348,7 @@ class _UserFormDialogState extends State<_UserFormDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                isEdit ? 'Edit user' : 'Create user',
+                'Create user',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
@@ -404,13 +360,8 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                     radius: 24,
                     backgroundImage: _avatarBytes != null
                         ? MemoryImage(_avatarBytes!)
-                        : (widget.user != null &&
-                              widget.user!.avatarUrl.isNotEmpty)
-                        ? NetworkImage(widget.user!.avatarUrl) as ImageProvider
                         : null,
-                    child:
-                        (_avatarBytes == null &&
-                            (widget.user?.avatarUrl.isEmpty ?? true))
+                    child: _avatarBytes == null
                         ? const Icon(Icons.person)
                         : null,
                   ),
@@ -528,7 +479,7 @@ class _UserFormDialogState extends State<_UserFormDialog> {
                       );
                       Navigator.pop(context);
                     },
-                    child: Text(isEdit ? 'Save' : 'Create'),
+                    child: const Text('Create'),
                   ),
                 ],
               ),

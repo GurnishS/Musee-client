@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:convert';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:musee/core/secrets/app_secrets.dart';
@@ -21,12 +22,11 @@ abstract interface class AdminTracksRemoteDataSource {
     String? lyricsUrl,
     bool? isExplicit,
     bool? isPublished,
-    Uint8List? audioBytes,
-    String? audioFilename,
-    Uint8List? coverBytes,
-    String? coverFilename,
+    required Uint8List audioBytes,
+    required String audioFilename,
     Uint8List? videoBytes,
     String? videoFilename,
+    List<Map<String, String>>? artists,
   });
 
   Future<TrackModel> updateTrack({
@@ -39,13 +39,30 @@ abstract interface class AdminTracksRemoteDataSource {
     bool? isPublished,
     Uint8List? audioBytes,
     String? audioFilename,
-    Uint8List? coverBytes,
-    String? coverFilename,
     Uint8List? videoBytes,
     String? videoFilename,
+    List<Map<String, String>>? artists,
   });
 
   Future<void> deleteTrack(String id);
+
+  // Artist management
+  Future<void> linkArtistToTrack({
+    required String trackId,
+    required String artistId,
+    required String role,
+  });
+
+  Future<void> updateTrackArtistRole({
+    required String trackId,
+    required String artistId,
+    required String role,
+  });
+
+  Future<void> unlinkArtistFromTrack({
+    required String trackId,
+    required String artistId,
+  });
 }
 
 class AdminTracksRemoteDataSourceImpl implements AdminTracksRemoteDataSource {
@@ -108,73 +125,47 @@ class AdminTracksRemoteDataSourceImpl implements AdminTracksRemoteDataSource {
     String? lyricsUrl,
     bool? isExplicit,
     bool? isPublished,
-    Uint8List? audioBytes,
-    String? audioFilename,
-    Uint8List? coverBytes,
-    String? coverFilename,
+    required Uint8List audioBytes,
+    required String audioFilename,
     Uint8List? videoBytes,
     String? videoFilename,
+    List<Map<String, String>>? artists,
   }) async {
-    final isMultipart =
-        audioBytes != null || coverBytes != null || videoBytes != null;
-    if (isMultipart) {
-      final form = dio.FormData();
-      form.fields.add(MapEntry('title', title));
-      form.fields.add(MapEntry('album_id', albumId));
-      form.fields.add(MapEntry('duration', duration.toString()));
-      if (lyricsUrl != null) form.fields.add(MapEntry('lyrics_url', lyricsUrl));
-      if (isExplicit != null)
-        form.fields.add(MapEntry('is_explicit', isExplicit.toString()));
-      if (isPublished != null)
-        form.fields.add(MapEntry('is_published', isPublished.toString()));
-
-      if (audioBytes != null && audioFilename != null) {
-        form.files.add(
-          MapEntry(
-            'audio',
-            dio.MultipartFile.fromBytes(audioBytes, filename: audioFilename),
-          ),
-        );
-      }
-      if (coverBytes != null && coverFilename != null) {
-        form.files.add(
-          MapEntry(
-            'cover',
-            dio.MultipartFile.fromBytes(coverBytes, filename: coverFilename),
-          ),
-        );
-      }
-      if (videoBytes != null && videoFilename != null) {
-        form.files.add(
-          MapEntry(
-            'video',
-            dio.MultipartFile.fromBytes(videoBytes, filename: videoFilename),
-          ),
-        );
-      }
-
-      final res = await _dio.post(
-        basePath,
-        data: form,
-        options: dio.Options(headers: _authHeader()),
-      );
-      return TrackModel.fromJson(Map<String, dynamic>.from(res.data));
-    } else {
-      final body = {
-        'title': title,
-        'album_id': albumId,
-        'duration': duration,
-        if (lyricsUrl != null) 'lyrics_url': lyricsUrl,
-        if (isExplicit != null) 'is_explicit': isExplicit,
-        if (isPublished != null) 'is_published': isPublished,
-      };
-      final res = await _dio.post(
-        basePath,
-        data: body,
-        options: dio.Options(headers: _authHeader()),
-      );
-      return TrackModel.fromJson(Map<String, dynamic>.from(res.data));
+    // Audio is required for create per API; always multipart
+    final form = dio.FormData();
+    form.fields.add(MapEntry('title', title));
+    form.fields.add(MapEntry('album_id', albumId));
+    form.fields.add(MapEntry('duration', duration.toString()));
+    if (lyricsUrl != null) form.fields.add(MapEntry('lyrics_url', lyricsUrl));
+    if (isExplicit != null)
+      form.fields.add(MapEntry('is_explicit', isExplicit.toString()));
+    if (isPublished != null)
+      form.fields.add(MapEntry('is_published', isPublished.toString()));
+    if (artists != null && artists.isNotEmpty) {
+      form.fields.add(MapEntry('artists', jsonEncode(artists)));
     }
+
+    form.files.add(
+      MapEntry(
+        'audio',
+        dio.MultipartFile.fromBytes(audioBytes, filename: audioFilename),
+      ),
+    );
+    if (videoBytes != null && videoFilename != null) {
+      form.files.add(
+        MapEntry(
+          'video',
+          dio.MultipartFile.fromBytes(videoBytes, filename: videoFilename),
+        ),
+      );
+    }
+
+    final res = await _dio.post(
+      basePath,
+      data: form,
+      options: dio.Options(headers: _authHeader()),
+    );
+    return TrackModel.fromJson(Map<String, dynamic>.from(res.data));
   }
 
   @override
@@ -188,13 +179,11 @@ class AdminTracksRemoteDataSourceImpl implements AdminTracksRemoteDataSource {
     bool? isPublished,
     Uint8List? audioBytes,
     String? audioFilename,
-    Uint8List? coverBytes,
-    String? coverFilename,
     Uint8List? videoBytes,
     String? videoFilename,
+    List<Map<String, String>>? artists,
   }) async {
-    final isMultipart =
-        audioBytes != null || coverBytes != null || videoBytes != null;
+    final isMultipart = audioBytes != null || videoBytes != null;
     if (isMultipart) {
       final form = dio.FormData();
       if (title != null) form.fields.add(MapEntry('title', title));
@@ -206,20 +195,15 @@ class AdminTracksRemoteDataSourceImpl implements AdminTracksRemoteDataSource {
         form.fields.add(MapEntry('is_explicit', isExplicit.toString()));
       if (isPublished != null)
         form.fields.add(MapEntry('is_published', isPublished.toString()));
+      if (artists != null && artists.isNotEmpty) {
+        form.fields.add(MapEntry('artists', jsonEncode(artists)));
+      }
 
       if (audioBytes != null && audioFilename != null) {
         form.files.add(
           MapEntry(
             'audio',
             dio.MultipartFile.fromBytes(audioBytes, filename: audioFilename),
-          ),
-        );
-      }
-      if (coverBytes != null && coverFilename != null) {
-        form.files.add(
-          MapEntry(
-            'cover',
-            dio.MultipartFile.fromBytes(coverBytes, filename: coverFilename),
           ),
         );
       }
@@ -246,6 +230,7 @@ class AdminTracksRemoteDataSourceImpl implements AdminTracksRemoteDataSource {
       if (lyricsUrl != null) body['lyrics_url'] = lyricsUrl;
       if (isExplicit != null) body['is_explicit'] = isExplicit;
       if (isPublished != null) body['is_published'] = isPublished;
+      if (artists != null && artists.isNotEmpty) body['artists'] = artists;
 
       final res = await _dio.patch(
         '$basePath/$id',
@@ -260,6 +245,43 @@ class AdminTracksRemoteDataSourceImpl implements AdminTracksRemoteDataSource {
   Future<void> deleteTrack(String id) async {
     await _dio.delete(
       '$basePath/$id',
+      options: dio.Options(headers: _authHeader()),
+    );
+  }
+
+  @override
+  Future<void> linkArtistToTrack({
+    required String trackId,
+    required String artistId,
+    required String role,
+  }) async {
+    await _dio.post(
+      '$basePath/$trackId/artists',
+      data: {'artist_id': artistId, 'role': role},
+      options: dio.Options(headers: _authHeader()),
+    );
+  }
+
+  @override
+  Future<void> updateTrackArtistRole({
+    required String trackId,
+    required String artistId,
+    required String role,
+  }) async {
+    await _dio.patch(
+      '$basePath/$trackId/artists/$artistId',
+      data: {'role': role},
+      options: dio.Options(headers: _authHeader()),
+    );
+  }
+
+  @override
+  Future<void> unlinkArtistFromTrack({
+    required String trackId,
+    required String artistId,
+  }) async {
+    await _dio.delete(
+      '$basePath/$trackId/artists/$artistId',
       options: dio.Options(headers: _authHeader()),
     );
   }

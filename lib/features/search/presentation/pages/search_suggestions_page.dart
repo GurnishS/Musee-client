@@ -2,6 +2,7 @@ import 'package:musee/features/search/presentation/bloc/search_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:musee/core/common/widgets/bottom_nav_bar.dart';
 
 /// Search suggestions page that displays search suggestions as user types
 /// Provides autocomplete functionality and navigation to search results
@@ -47,7 +48,11 @@ class _SearchSuggestionsPageState extends State<SearchSuggestionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: _buildAppBar(), body: _buildBody());
+    return Scaffold(
+      appBar: _buildAppBar(),
+      body: _buildBody(),
+      bottomNavigationBar: const BottomNavBar(selectedIndex: 1),
+    );
   }
 
   /// Builds app bar with search field
