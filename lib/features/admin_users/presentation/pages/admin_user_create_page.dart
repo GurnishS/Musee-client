@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
+import 'package:musee/features/admin_artists/presentation/widgets/uuid_picker_dialog.dart';
 import 'package:musee/core/common/entities/user.dart';
 import 'package:musee/core/usecase/usecase.dart';
 import 'package:musee/features/admin_plans/domain/entities/plan.dart';
@@ -113,12 +114,27 @@ class _AdminUserCreatePageState extends State<AdminUserCreatePage> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _PlanAutocomplete(
-                          plans: _plans,
-                          loading: _loadingPlans,
-                          onSelected: (p) => setState(() => _selectedPlan = p),
-                          onCreateNew: () =>
-                              context.go('/admin/plans?create-new=1'),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _PlanAutocomplete(
+                              plans: _plans,
+                              loading: _loadingPlans,
+                              onSelected: (p) =>
+                                  setState(() => _selectedPlan = p),
+                              onCreateNew: () =>
+                                  context.go('/admin/plans?create-new=1'),
+                            ),
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: OutlinedButton.icon(
+                                onPressed: _openPlanUuidPicker,
+                                icon: const Icon(Icons.search),
+                                label: const Text('Pick plan by UUID…'),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -189,6 +205,43 @@ class _AdminUserCreatePageState extends State<AdminUserCreatePage> {
         backgroundColor: isError ? Colors.red : null,
       ),
     );
+  }
+
+  Future<void> _openPlanUuidPicker() async {
+    final picked = await showDialog<UuidPickResult>(
+      context: context,
+      builder: (ctx) => UuidPickerDialog(
+        title: 'Pick Plan',
+        fetchPage: (page, limit, query) async {
+          final listPlans = serviceLocator<ListPlans>();
+          final res = await listPlans(NoParams());
+          return res.fold((_) => UuidPageResult(items: const [], total: 0), (
+            plans,
+          ) {
+            final q = (query ?? '').toLowerCase();
+            final filtered = q.isEmpty
+                ? plans
+                : plans.where(
+                    (p) => p.name.toLowerCase().contains(q) || p.id.contains(q),
+                  );
+            final total = filtered.length;
+            final start = (page * limit).clamp(0, total);
+            final end = ((page + 1) * limit).clamp(0, total);
+            final slice = filtered.toList().sublist(start, end);
+            return UuidPageResult(
+              items: [for (final p in slice) UuidItem(id: p.id, label: p.name)],
+              total: total,
+            );
+          });
+        },
+      ),
+    );
+    if (picked != null) {
+      final match = _plans.where((p) => p.id == picked.id);
+      setState(() {
+        _selectedPlan = match.isNotEmpty ? match.first : _selectedPlan;
+      });
+    }
   }
 }
 

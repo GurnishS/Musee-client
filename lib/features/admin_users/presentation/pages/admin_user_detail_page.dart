@@ -1,6 +1,8 @@
+import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:musee/features/admin_artists/presentation/widgets/uuid_picker_dialog.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musee/core/common/entities/user.dart';
 import 'package:musee/core/usecase/usecase.dart';
@@ -119,6 +121,7 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
                         const SizedBox(height: 12),
                         _AvatarRow(
                           avatarUrl: _user!.avatarUrl,
+                          previewBytes: _avatarFile?.bytes,
                           onPick: (f) => setState(() => _avatarFile = f),
                           onClear: () => setState(() => _avatarFile = null),
                           pickedName: _avatarFile?.name,
@@ -178,18 +181,34 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: _PlanAutocomplete(
-                                plans: _plans,
-                                loading: _loadingPlans,
-                                initial: _selectedPlan,
-                                onSelected: (p) =>
-                                    setState(() => _selectedPlan = p),
-                                onCreateNew: () =>
-                                    context.go('/admin/plans?create-new=1'),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _PlanAutocomplete(
+                                    plans: _plans,
+                                    loading: _loadingPlans,
+                                    initial: _selectedPlan,
+                                    onSelected: (p) =>
+                                        setState(() => _selectedPlan = p),
+                                    onCreateNew: () =>
+                                        context.go('/admin/plans?create-new=1'),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: OutlinedButton.icon(
+                                      onPressed: _openPlanUuidPicker,
+                                      icon: const Icon(Icons.search),
+                                      label: const Text('Pick plan by UUID…'),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 16),
+                        _UserMetaGrid(user: _user!),
                         const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
@@ -217,6 +236,7 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
   Future<void> _onSave() async {
     if (_formKey.currentState?.validate() != true) return;
     final update = serviceLocator<UpdateUser>();
+    final prevAvatar = _user!.avatarUrl;
     final res = await update(
       UpdateUserParams(
         id: _user!.id,
@@ -228,7 +248,23 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
         avatarFilename: _avatarFile?.name,
       ),
     );
-    res.fold((f) => _snack(f.message, error: true), (_) => _snack('Saved'));
+    res.fold((f) => _snack(f.message, error: true), (updated) async {
+      // Update local state with server response so UI reflects new values
+      setState(() {
+        _user = updated;
+        _avatarFile = null;
+      });
+      // Evict old and new avatar URLs to force refresh
+      try {
+        if (prevAvatar.isNotEmpty) {
+          await NetworkImage(prevAvatar).evict();
+        }
+        if (updated.avatarUrl.isNotEmpty) {
+          await NetworkImage(updated.avatarUrl).evict();
+        }
+      } catch (_) {}
+      _snack('Saved');
+    });
   }
 
   void _snack(String msg, {bool error = false}) {
@@ -236,6 +272,46 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), backgroundColor: error ? Colors.red : null),
     );
+  }
+
+  Future<void> _openPlanUuidPicker() async {
+    if (!mounted) return;
+    final picked = await showDialog<UuidPickResult>(
+      context: context,
+      builder: (ctx) => UuidPickerDialog(
+        title: 'Pick Plan',
+        fetchPage: (page, limit, query) async {
+          // Fetch all plans once, filter and paginate locally
+          final listPlans = serviceLocator<ListPlans>();
+          final res = await listPlans(NoParams());
+          return res.fold((_) => UuidPageResult(items: const [], total: 0), (
+            plans,
+          ) {
+            final q = (query ?? '').toLowerCase();
+            final filtered = q.isEmpty
+                ? plans
+                : plans.where(
+                    (p) => p.name.toLowerCase().contains(q) || p.id.contains(q),
+                  );
+            final total = filtered.length;
+            final start = (page * limit).clamp(0, total);
+            final end = ((page + 1) * limit).clamp(0, total);
+            final slice = filtered.toList().sublist(start, end);
+            return UuidPageResult(
+              items: [for (final p in slice) UuidItem(id: p.id, label: p.name)],
+              total: total,
+            );
+          });
+        },
+      ),
+    );
+    if (picked != null) {
+      // Reflect in autocomplete by finding the plan with this id
+      final match = _plans.where((p) => p.id == picked.id);
+      setState(() {
+        _selectedPlan = match.isNotEmpty ? match.first : _selectedPlan;
+      });
+    }
   }
 }
 
@@ -298,12 +374,14 @@ class _KeyValueCopy extends StatelessWidget {
 class _AvatarRow extends StatelessWidget {
   final String avatarUrl;
   final String? pickedName;
+  final Uint8List? previewBytes;
   final ValueChanged<PlatformFile> onPick;
   final VoidCallback onClear;
   const _AvatarRow({
     required this.avatarUrl,
     required this.onPick,
     required this.onClear,
+    this.previewBytes,
     this.pickedName,
   });
 
@@ -314,10 +392,12 @@ class _AvatarRow extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 28,
-          backgroundImage: avatarUrl.isNotEmpty
-              ? NetworkImage(avatarUrl)
+          backgroundImage: previewBytes != null
+              ? MemoryImage(previewBytes!)
+              : (avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null),
+          child: (previewBytes == null && avatarUrl.isEmpty)
+              ? const Icon(Icons.person)
               : null,
-          child: avatarUrl.isEmpty ? const Icon(Icons.person) : null,
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -354,6 +434,76 @@ class _AvatarRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _UserMetaGrid extends StatelessWidget {
+  final User user;
+  const _UserMetaGrid({required this.user});
+
+  Widget _chip(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.dividerColor),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: theme.textTheme.labelSmall),
+          const SizedBox(height: 4),
+          Text(value, style: theme.textTheme.bodyMedium),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <Widget>[
+      _chip(context, 'User type', user.userType.value),
+      _chip(context, 'Followers', user.followersCount.toString()),
+      _chip(context, 'Followings', user.followingsCount.toString()),
+      _chip(context, 'Created', user.createdAt?.toIso8601String() ?? '—'),
+      _chip(context, 'Updated', user.updatedAt?.toIso8601String() ?? '—'),
+      _chip(context, 'Last login', user.lastLoginAt?.toIso8601String() ?? '—'),
+      _chip(context, 'Playlists', user.playlists.length.toString()),
+    ];
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: LayoutBuilder(
+          builder: (context, c) {
+            final isNarrow = c.maxWidth < 600;
+            if (isNarrow) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (int i = 0; i < items.length; i++) ...[
+                    items[i],
+                    if (i != items.length - 1) const SizedBox(height: 8),
+                  ],
+                ],
+              );
+            }
+            return GridView.count(
+              crossAxisCount: 3,
+              childAspectRatio: 3.6,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              children: items,
+            );
+          },
+        ),
+      ),
     );
   }
 }

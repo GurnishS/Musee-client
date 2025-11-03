@@ -16,9 +16,13 @@ import 'package:musee/features/admin_artists/presentation/pages/admin_artist_det
 import 'package:musee/features/admin_artists/presentation/bloc/admin_artists_bloc.dart';
 import 'package:musee/features/admin_albums/presentation/bloc/admin_albums_bloc.dart';
 import 'package:musee/features/admin_albums/presentation/pages/admin_albums_page.dart';
+import 'package:musee/features/admin_albums/presentation/pages/admin_album_create_page.dart';
+import 'package:musee/features/admin_albums/presentation/pages/admin_album_detail_page.dart';
 import 'package:musee/features/admin_plans/presentation/pages/admin_plans_page.dart';
 import 'package:musee/features/admin_plans/presentation/bloc/admin_plans_bloc.dart';
 import 'package:musee/features/admin_tracks/presentation/pages/admin_tracks_page.dart';
+import 'package:musee/features/admin_tracks/presentation/pages/admin_track_create_page.dart';
+import 'package:musee/features/admin_tracks/presentation/pages/admin_track_detail_page.dart';
 import 'package:musee/features/admin_tracks/presentation/bloc/admin_tracks_bloc.dart';
 import 'package:musee/init_dependencies.dart';
 import 'package:flutter/material.dart';
@@ -150,6 +154,21 @@ class AppGoRouter {
         ),
 
         GoRoute(
+          path: Routes.adminAlbumCreate,
+          name: 'admin_album_create',
+          builder: (context, state) => const AdminAlbumCreatePage(),
+        ),
+
+        GoRoute(
+          path: Routes.adminAlbumDetail,
+          name: 'admin_album_detail',
+          builder: (context, state) {
+            final id = state.pathParameters['id'] ?? '';
+            return AdminAlbumDetailPage(albumId: id);
+          },
+        ),
+
+        GoRoute(
           path: Routes.adminPlans,
           name: 'admin_plans',
           builder: (context, state) => BlocProvider(
@@ -165,6 +184,21 @@ class AppGoRouter {
             create: (_) => serviceLocator<AdminTracksBloc>(),
             child: const AdminTracksPage(),
           ),
+        ),
+
+        GoRoute(
+          path: Routes.adminTrackCreate,
+          name: 'admin_track_create',
+          builder: (context, state) => const AdminTrackCreatePage(),
+        ),
+
+        GoRoute(
+          path: Routes.adminTrackDetail,
+          name: 'admin_track_detail',
+          builder: (context, state) {
+            final id = state.pathParameters['id'] ?? '';
+            return AdminTrackDetailPage(trackId: id);
+          },
         ),
 
         GoRoute(

@@ -10,6 +10,8 @@ import 'package:musee/features/user__dashboard/presentation/widgets/section_head
 import 'package:go_router/go_router.dart';
 import 'package:musee/core/common/navigation/routes.dart';
 import 'package:musee/core/common/entities/user.dart';
+import 'package:musee/features/user__dashboard/presentation/bloc/user_dashboard_cubit.dart';
+import 'package:get_it/get_it.dart';
 
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
@@ -29,96 +31,146 @@ class _UserDashboardState extends State<UserDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      bottomNavigationBar: BottomNavBar(selectedIndex: 0),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            final isCompact = width < 700;
+    return BlocProvider<UserDashboardCubit>(
+      create: (_) => GetIt.I<UserDashboardCubit>()..load(),
+      child: Scaffold(
+        bottomNavigationBar: BottomNavBar(selectedIndex: 0),
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final isCompact = width < 700;
 
-            // Filler data for sections
-            final recentlyPlayed = <MediaItem>[
-              MediaItem(
-                title: 'Supreme',
-                subtitle: 'Album',
-                imageUrl: 'https://picsum.photos/seed/supreme/300/300',
-                icon: Icons.album,
-                onTap: () =>
-                    context.go('/albums/a06af84f-19b7-4688-949a-e7151460bff5'),
-              ),
-              ...List.generate(
-                12,
-                (i) => MediaItem(
-                  title: 'Track #${i + 1}',
-                  subtitle: 'Artist ${String.fromCharCode(65 + (i % 26))}',
-                  imageUrl: i % 3 == 0
-                      ? null
-                      : 'https://picsum.photos/seed/rp$i/300/300',
-                  icon: Icons.audiotrack,
+              // Minimal placeholder for Recently played with the required "Supreme" deep link
+              final recentlyPlayed = <MediaItem>[
+                MediaItem(
+                  title: 'Supreme',
+                  subtitle: 'Album',
+                  imageUrl: 'https://picsum.photos/seed/supreme/300/300',
+                  icon: Icons.album,
+                  onTap: () => context.go(
+                    '/albums/a06af84f-19b7-4688-949a-e7151460bff5',
+                  ),
                 ),
-              ),
-            ];
-            final madeForYou = List.generate(
-              8,
-              (i) => MediaItem(
-                title: 'Daily Mix ${i + 1}',
-                subtitle: 'Personalized playlist',
-                imageUrl: i % 2 == 0
-                    ? 'https://picsum.photos/seed/mfy$i/300/300'
-                    : null,
-                icon: Icons.queue_music,
-              ),
-            );
-            final trending = List.generate(
-              10,
-              (i) => MediaItem(
-                title: 'Trending ${i + 1}',
-                subtitle: 'Hot now',
-                imageUrl: 'https://picsum.photos/seed/tr$i/300/300',
-                icon: Icons.trending_up,
-              ),
-            );
+              ];
 
-            return CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                    child: _HeaderBar(),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: _HeroBanner(),
-                  ),
-                ),
-                SliverToBoxAdapter(child: SizedBox(height: isCompact ? 8 : 12)),
-                SliverToBoxAdapter(
-                  child: HorizontalMediaSection(
-                    title: 'Recently played',
-                    items: recentlyPlayed,
-                    onSeeAll: () {},
-                    cardWidth: isCompact ? 140 : 160,
-                  ),
-                ),
-                SliverToBoxAdapter(child: SizedBox(height: isCompact ? 4 : 8)),
-                SliverToBoxAdapter(
-                  child: SectionHeader(title: 'Made for you', onSeeAll: () {}),
-                ),
-                _GridSection(items: madeForYou),
-                SliverToBoxAdapter(child: SizedBox(height: isCompact ? 4 : 8)),
-                SliverToBoxAdapter(
-                  child: SectionHeader(title: 'Trending now', onSeeAll: () {}),
-                ),
-                _GridSection(items: trending),
-                SliverToBoxAdapter(
-                  child: SizedBox(height: isCompact ? 24 : 32),
-                ),
-              ],
-            );
-          },
+              return BlocBuilder<UserDashboardCubit, UserDashboardState>(
+                builder: (context, state) {
+                  final madeForYouItems = state.madeForYou
+                      .map(
+                        (a) => MediaItem(
+                          title: a.title,
+                          subtitle: a.artists.isNotEmpty
+                              ? a.artists.first.name
+                              : 'Album',
+                          imageUrl: a.coverUrl,
+                          icon: Icons.album,
+                          onTap: () => context.go('/albums/${a.albumId}'),
+                        ),
+                      )
+                      .toList();
+                  final trendingItems = state.trending
+                      .map(
+                        (a) => MediaItem(
+                          title: a.title,
+                          subtitle: a.artists.isNotEmpty
+                              ? a.artists.first.name
+                              : 'Album',
+                          imageUrl: a.coverUrl,
+                          icon: Icons.trending_up,
+                          onTap: () => context.go('/albums/${a.albumId}'),
+                        ),
+                      )
+                      .toList();
+
+                  return CustomScrollView(
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                          child: _HeaderBar(),
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: _HeroBanner(),
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                      SliverToBoxAdapter(
+                        child: HorizontalMediaSection(
+                          title: 'Recently played',
+                          items: recentlyPlayed,
+                          onSeeAll: () {},
+                          cardWidth: isCompact ? 140 : 160,
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: SizedBox(height: isCompact ? 4 : 8),
+                      ),
+                      SliverToBoxAdapter(
+                        child: SectionHeader(
+                          title: 'Made for you',
+                          onSeeAll: () {},
+                        ),
+                      ),
+                      if (state.loadingMadeForYou)
+                        const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                        )
+                      else if (state.errorMadeForYou != null)
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(
+                              'Failed to load: ${state.errorMadeForYou}',
+                            ),
+                          ),
+                        )
+                      else
+                        _GridSection(items: madeForYouItems),
+
+                      SliverToBoxAdapter(
+                        child: SizedBox(height: isCompact ? 4 : 8),
+                      ),
+                      SliverToBoxAdapter(
+                        child: SectionHeader(
+                          title: 'Trending now',
+                          onSeeAll: () {},
+                        ),
+                      ),
+                      if (state.loadingTrending)
+                        const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                        )
+                      else if (state.errorTrending != null)
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(
+                              'Failed to load: ${state.errorTrending}',
+                            ),
+                          ),
+                        )
+                      else
+                        _GridSection(items: trendingItems),
+
+                      SliverToBoxAdapter(
+                        child: SizedBox(height: isCompact ? 24 : 32),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -342,6 +394,7 @@ class _GridSection extends StatelessWidget {
                 subtitle: item.subtitle,
                 imageUrl: item.imageUrl,
                 fallbackIcon: item.icon,
+                onTap: item.onTap,
               );
             }, childCount: items.length),
           );

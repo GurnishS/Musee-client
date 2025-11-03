@@ -41,6 +41,7 @@ import 'package:musee/features/admin_albums/domain/usecases/get_album.dart';
 import 'package:musee/features/admin_albums/domain/usecases/create_album.dart';
 import 'package:musee/features/admin_albums/domain/usecases/update_album.dart';
 import 'package:musee/features/admin_albums/domain/usecases/delete_album.dart';
+import 'package:musee/features/admin_albums/domain/usecases/album_artists_ops.dart';
 import 'package:musee/features/admin_albums/presentation/bloc/admin_albums_bloc.dart';
 import 'package:musee/features/admin_plans/data/datasources/admin_plans_remote_data_source.dart';
 import 'package:musee/features/admin_plans/data/repositories/admin_plans_repository_impl.dart';
@@ -69,6 +70,12 @@ import 'package:musee/features/user_albums/data/repositories/user_albums_reposit
 import 'package:musee/features/user_albums/domain/repository/user_albums_repository.dart';
 import 'package:musee/features/user_albums/domain/usecases/get_user_album.dart';
 import 'package:musee/features/user_albums/presentation/bloc/user_album_bloc.dart';
+import 'package:musee/features/user__dashboard/data/datasources/user_dashboard_remote_data_source.dart';
+import 'package:musee/features/user__dashboard/data/repositories/user_dashboard_repository_impl.dart';
+import 'package:musee/features/user__dashboard/domain/repository/user_dashboard_repository.dart';
+import 'package:musee/features/user__dashboard/domain/usecases/list_made_for_you.dart';
+import 'package:musee/features/user__dashboard/domain/usecases/list_trending.dart';
+import 'package:musee/features/user__dashboard/presentation/bloc/user_dashboard_cubit.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -100,6 +107,7 @@ Future<void> initDependencies() async {
   _initAdminTracks();
   // user features
   _initUserAlbums();
+  _initUserDashboard();
 }
 
 void _initAuth() {
@@ -211,6 +219,9 @@ void _initAdminAlbums() {
     ..registerFactory(() => CreateAlbum(serviceLocator()))
     ..registerFactory(() => UpdateAlbum(serviceLocator()))
     ..registerFactory(() => DeleteAlbum(serviceLocator()))
+    ..registerFactory(() => AddAlbumArtist(serviceLocator()))
+    ..registerFactory(() => UpdateAlbumArtistRole(serviceLocator()))
+    ..registerFactory(() => RemoveAlbumArtist(serviceLocator()))
     // bloc
     ..registerFactory(
       () => AdminAlbumsBloc(
@@ -309,4 +320,35 @@ void _initUserAlbums() {
     )
     // bloc
     ..registerFactory(() => UserAlbumBloc(serviceLocator<GetUserAlbum>()));
+}
+
+void _initUserDashboard() {
+  serviceLocator
+    // datasource
+    ..registerLazySingleton<UserDashboardRemoteDataSource>(
+      () => UserDashboardRemoteDataSourceImpl(
+        serviceLocator<Dio>(),
+        serviceLocator(),
+      ),
+    )
+    // repository
+    ..registerLazySingleton<UserDashboardRepository>(
+      () => UserDashboardRepositoryImpl(
+        serviceLocator<UserDashboardRemoteDataSource>(),
+      ),
+    )
+    // use cases
+    ..registerFactory(
+      () => ListMadeForYou(serviceLocator<UserDashboardRepository>()),
+    )
+    ..registerFactory(
+      () => ListTrending(serviceLocator<UserDashboardRepository>()),
+    )
+    // cubit
+    ..registerFactory(
+      () => UserDashboardCubit(
+        serviceLocator<ListMadeForYou>(),
+        serviceLocator<ListTrending>(),
+      ),
+    );
 }

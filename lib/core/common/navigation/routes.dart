@@ -11,8 +11,12 @@ class Routes {
   static const String adminArtistCreate = '/admin/artists/create-new';
   static const String adminArtistDetail = '/admin/artists/:id';
   static const String adminAlbums = '/admin/albums';
+  static const String adminAlbumCreate = '/admin/albums/create-new';
+  static const String adminAlbumDetail = '/admin/albums/:id';
   static const String adminPlans = '/admin/plans';
   static const String adminTracks = '/admin/tracks';
+  static const String adminTrackCreate = '/admin/tracks/create-new';
+  static const String adminTrackDetail = '/admin/tracks/:id';
 
   // Authentication
   static const String signIn = '/sign-in';
