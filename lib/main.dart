@@ -36,11 +36,12 @@ void main() async {
         BlocProvider(create: (_) => serviceLocator<AuthBloc>()),
         BlocProvider(create: (_) => serviceLocator<AppUserCubit>()),
       ],
-      child: DevicePreview(
-        builder: (BuildContext context) {
-          return const MyApp();
-        },
-      ),
+      // child: DevicePreview(
+      //   builder: (BuildContext context) {
+      //     return const MyApp();
+      //   },
+      // ),
+      child: MyApp(),
     ),
   );
 }

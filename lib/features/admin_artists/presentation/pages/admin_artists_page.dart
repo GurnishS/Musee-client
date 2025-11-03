@@ -2,8 +2,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:musee/features/admin_artists/presentation/bloc/admin_artists_bloc.dart';
+import 'package:musee/core/common/widgets/admin_sidebar.dart';
 import 'package:musee/features/admin_artists/domain/entities/artist.dart';
 
 class AdminArtistsPage extends StatefulWidget {
@@ -31,28 +33,10 @@ class _AdminArtistsPageState extends State<AdminArtistsPage> {
   }
 
   void _openCreateDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        child: BlocProvider.value(
-          value: context.read<AdminArtistsBloc>(),
-          child: const _CreateArtistDialog(),
-        ),
-      ),
-    );
+    context.push('/admin/artists/create-new');
   }
 
-  void _openEditDialog(Artist a) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        child: BlocProvider.value(
-          value: context.read<AdminArtistsBloc>(),
-          child: _EditArtistDialog(artist: a),
-        ),
-      ),
-    );
-  }
+  // Note: Editing is handled on the detail page now. No inline edit dialog here.
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +52,7 @@ class _AdminArtistsPageState extends State<AdminArtistsPage> {
           ),
         ],
       ),
+      drawer: const Drawer(child: AdminSidebar()),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -173,15 +158,19 @@ class _AdminArtistsPageState extends State<AdminArtistsPage> {
                                         ),
                                         title: Text(a.name),
                                         selected: _selectedArtist?.id == a.id,
-                                        onTap: () =>
-                                            setState(() => _selectedArtist = a),
+                                        onTap: () => context.push(
+                                          '/admin/artists/${a.id}',
+                                        ),
                                         trailing: Wrap(
                                           spacing: 4,
                                           children: [
                                             IconButton(
-                                              icon: const Icon(Icons.edit),
-                                              onPressed: () =>
-                                                  _openEditDialog(a),
+                                              icon: const Icon(
+                                                Icons.info_outline,
+                                              ),
+                                              onPressed: () => context.push(
+                                                '/admin/artists/${a.id}',
+                                              ),
                                             ),
                                             IconButton(
                                               icon: const Icon(
@@ -251,8 +240,9 @@ class _AdminArtistsPageState extends State<AdminArtistsPage> {
                                   rows: artists.map((a) {
                                     return DataRow(
                                       selected: _selectedArtist?.id == a.id,
-                                      onSelectChanged: (_) =>
-                                          setState(() => _selectedArtist = a),
+                                      onSelectChanged: (_) => context.push(
+                                        '/admin/artists/${a.id}',
+                                      ),
                                       cells: [
                                         DataCell(
                                           CircleAvatar(
@@ -285,9 +275,12 @@ class _AdminArtistsPageState extends State<AdminArtistsPage> {
                                           Row(
                                             children: [
                                               IconButton(
-                                                icon: const Icon(Icons.edit),
-                                                onPressed: () =>
-                                                    _openEditDialog(a),
+                                                icon: const Icon(
+                                                  Icons.info_outline,
+                                                ),
+                                                onPressed: () => context.push(
+                                                  '/admin/artists/${a.id}',
+                                                ),
                                               ),
                                               IconButton(
                                                 icon: const Icon(
@@ -492,6 +485,7 @@ class _CreateArtistDialogState extends State<_CreateArtistDialog> {
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final _regionIdCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
   List<int>? _avatarBytes;
   String? _avatarFilename;
@@ -504,6 +498,7 @@ class _CreateArtistDialogState extends State<_CreateArtistDialog> {
     _nameCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
+    _regionIdCtrl.dispose();
     _bioCtrl.dispose();
     super.dispose();
   }
@@ -545,6 +540,7 @@ class _CreateArtistDialogState extends State<_CreateArtistDialog> {
         name: !_linkExisting ? _nameCtrl.text.trim() : null,
         email: !_linkExisting ? _emailCtrl.text.trim() : null,
         password: !_linkExisting ? _passwordCtrl.text : null,
+        regionId: !_linkExisting ? _regionIdCtrl.text.trim() : null,
         bio: _bioCtrl.text.trim(),
         coverBytes: _coverBytes,
         coverFilename: _coverFilename,
@@ -615,11 +611,21 @@ class _CreateArtistDialogState extends State<_CreateArtistDialog> {
                   TextFormField(
                     controller: _passwordCtrl,
                     decoration: const InputDecoration(
-                      labelText: 'User password',
+                      labelText: 'User password (optional)',
                     ),
                     obscureText: true,
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Required' : null,
+                    // Password is optional when creating a new artist user
+                    validator: (v) => null,
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _regionIdCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Region ID (required)',
+                    ),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Region ID is required'
+                        : null,
                   ),
                 ],
                 const SizedBox(height: 8),

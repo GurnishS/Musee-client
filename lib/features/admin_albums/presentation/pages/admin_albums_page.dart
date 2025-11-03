@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:musee/features/admin_albums/domain/entities/album.dart';
 import 'package:musee/features/admin_albums/presentation/bloc/admin_albums_bloc.dart';
+import 'package:musee/core/common/widgets/admin_sidebar.dart';
 
 class AdminAlbumsPage extends StatefulWidget {
   const AdminAlbumsPage({super.key});
@@ -67,6 +68,7 @@ class _AdminAlbumsPageState extends State<AdminAlbumsPage> {
           ),
         ],
       ),
+      drawer: const Drawer(child: AdminSidebar()),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

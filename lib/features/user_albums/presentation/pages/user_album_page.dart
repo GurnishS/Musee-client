@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart' as dio;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:musee/core/common/widgets/bottom_nav_bar.dart';
@@ -74,8 +75,11 @@ class _UserAlbumView extends StatelessWidget {
         final hls = (data['hls'] as Map?)?.cast<String, dynamic>();
         final master = hls?['master'] as String?;
 
-        // On web, just_audio_web may not play HLS m3u8. Prefer a progressive URL if available.
-        if (kIsWeb) {
+        // On web and Windows, prefer progressive MP3 if available
+        // (Windows Media Foundation has limited HLS support via just_audio_windows).
+        final isWindows =
+            !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
+        if (kIsWeb || isWindows) {
           final audios = (data['audios'] as List?)?.cast<dynamic>() ?? const [];
           String? bestMp3;
           int bestBitrate = -1;
@@ -94,7 +98,7 @@ class _UserAlbumView extends StatelessWidget {
           return bestMp3 ?? master;
         }
 
-        // Non-web: use HLS master
+        // Other native platforms: use HLS master
         return master;
       } catch (_) {
         return null;

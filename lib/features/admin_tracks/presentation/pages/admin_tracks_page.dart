@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:musee/core/common/widgets/admin_sidebar.dart';
 import '../bloc/admin_tracks_bloc.dart';
 import '../../domain/entities/track.dart';
 
@@ -31,6 +32,7 @@ class _AdminTracksPageState extends State<AdminTracksPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Admin • Tracks')),
+      drawer: const Drawer(child: AdminSidebar()),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openCreateDialog(context),
         icon: const Icon(Icons.library_music_outlined),

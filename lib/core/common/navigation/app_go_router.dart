@@ -11,6 +11,8 @@ import 'package:musee/features/admin_users/presentation/pages/admin_user_detail_
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:musee/features/admin_users/presentation/bloc/admin_users_bloc.dart';
 import 'package:musee/features/admin_artists/presentation/pages/admin_artists_page.dart';
+import 'package:musee/features/admin_artists/presentation/pages/admin_artist_create_page.dart';
+import 'package:musee/features/admin_artists/presentation/pages/admin_artist_detail_page.dart';
 import 'package:musee/features/admin_artists/presentation/bloc/admin_artists_bloc.dart';
 import 'package:musee/features/admin_albums/presentation/bloc/admin_albums_bloc.dart';
 import 'package:musee/features/admin_albums/presentation/pages/admin_albums_page.dart';
@@ -115,6 +117,27 @@ class AppGoRouter {
             create: (_) => serviceLocator<AdminArtistsBloc>(),
             child: const AdminArtistsPage(),
           ),
+        ),
+
+        GoRoute(
+          path: Routes.adminArtistCreate,
+          name: 'admin_artist_create',
+          builder: (context, state) => BlocProvider(
+            create: (_) => serviceLocator<AdminArtistsBloc>(),
+            child: const AdminArtistCreatePage(),
+          ),
+        ),
+
+        GoRoute(
+          path: Routes.adminArtistDetail,
+          name: 'admin_artist_detail',
+          builder: (context, state) {
+            final id = state.pathParameters['id'] ?? '';
+            return BlocProvider(
+              create: (_) => serviceLocator<AdminArtistsBloc>(),
+              child: AdminArtistDetailPage(artistId: id),
+            );
+          },
         ),
 
         GoRoute(

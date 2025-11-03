@@ -7,6 +7,9 @@ import 'package:musee/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:musee/features/user__dashboard/presentation/widgets/horizontal_media_section.dart';
 import 'package:musee/features/user__dashboard/presentation/widgets/media_card.dart';
 import 'package:musee/features/user__dashboard/presentation/widgets/section_header.dart';
+import 'package:go_router/go_router.dart';
+import 'package:musee/core/common/navigation/routes.dart';
+import 'package:musee/core/common/entities/user.dart';
 
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
@@ -35,17 +38,27 @@ class _UserDashboardState extends State<UserDashboard> {
             final isCompact = width < 700;
 
             // Filler data for sections
-            final recentlyPlayed = List.generate(
-              12,
-              (i) => MediaItem(
-                title: 'Track #${i + 1}',
-                subtitle: 'Artist ${String.fromCharCode(65 + (i % 26))}',
-                imageUrl: i % 3 == 0
-                    ? null
-                    : 'https://picsum.photos/seed/rp$i/300/300',
-                icon: Icons.audiotrack,
+            final recentlyPlayed = <MediaItem>[
+              MediaItem(
+                title: 'Supreme',
+                subtitle: 'Album',
+                imageUrl: 'https://picsum.photos/seed/supreme/300/300',
+                icon: Icons.album,
+                onTap: () =>
+                    context.go('/albums/a06af84f-19b7-4688-949a-e7151460bff5'),
               ),
-            );
+              ...List.generate(
+                12,
+                (i) => MediaItem(
+                  title: 'Track #${i + 1}',
+                  subtitle: 'Artist ${String.fromCharCode(65 + (i % 26))}',
+                  imageUrl: i % 3 == 0
+                      ? null
+                      : 'https://picsum.photos/seed/rp$i/300/300',
+                  icon: Icons.audiotrack,
+                ),
+              ),
+            ];
             final madeForYou = List.generate(
               8,
               (i) => MediaItem(
@@ -151,19 +164,51 @@ class _HeaderBar extends StatelessWidget {
           tooltip: 'Notifications',
         ),
         const SizedBox(width: 8),
-        PopupMenuButton<String>(
-          icon: const CircleAvatar(child: Icon(Icons.person)),
-          onSelected: (value) {
-            if (value == 'logout') {
-              context.read<AuthBloc>().add(AuthLogout());
-              context.read<AppUserCubit>().updateUser(null);
-            }
+        // Quick access to Admin Home if the current user is an admin
+        BlocBuilder<AppUserCubit, AppUserState>(
+          builder: (context, state) {
+            final isAdmin =
+                state is AppUserLoggedIn &&
+                state.user.userType == UserType.admin;
+            if (!isAdmin) return const SizedBox.shrink();
+            return IconButton.filledTonal(
+              tooltip: 'Admin home',
+              onPressed: () => context.go(Routes.adminDashboard),
+              icon: const Icon(Icons.admin_panel_settings),
+            );
           },
-          itemBuilder: (context) => [
-            const PopupMenuItem(value: 'profile', child: Text('Profile')),
-            const PopupMenuItem(value: 'settings', child: Text('Settings')),
-            const PopupMenuItem(value: 'logout', child: Text('Logout')),
-          ],
+        ),
+        const SizedBox(width: 8),
+        BlocBuilder<AppUserCubit, AppUserState>(
+          builder: (context, state) {
+            final isAdmin =
+                state is AppUserLoggedIn &&
+                state.user.userType == UserType.admin;
+            return PopupMenuButton<String>(
+              icon: const CircleAvatar(child: Icon(Icons.person)),
+              onSelected: (value) {
+                switch (value) {
+                  case 'admin':
+                    context.go(Routes.adminDashboard);
+                    break;
+                  case 'logout':
+                    context.read<AuthBloc>().add(AuthLogout());
+                    context.read<AppUserCubit>().updateUser(null);
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(value: 'profile', child: Text('Profile')),
+                const PopupMenuItem(value: 'settings', child: Text('Settings')),
+                if (isAdmin)
+                  const PopupMenuItem(
+                    value: 'admin',
+                    child: Text('Open admin dashboard'),
+                  ),
+                const PopupMenuItem(value: 'logout', child: Text('Logout')),
+              ],
+            );
+          },
         ),
       ],
     );

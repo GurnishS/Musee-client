@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musee/core/common/navigation/routes.dart';
-import 'package:musee/features/admin__dashboard/presentation/widgets/admin_sidebar.dart';
+import 'package:musee/core/common/widgets/admin_sidebar.dart';
 import 'package:musee/features/admin__dashboard/presentation/widgets/admin_card.dart';
 
 class AdminDashboard extends StatefulWidget {
@@ -110,7 +110,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         icon: Icons.music_note,
                         color: Colors.green,
                         onTap: () {
-                          context.go('/admin/tracks');
+                          context.push('/admin/tracks');
                         },
                       ),
                       AdminCard(
@@ -135,7 +135,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         icon: Icons.subscriptions,
                         color: Colors.indigo,
                         onTap: () {
-                          context.go('/admin/plans');
+                          context.push('/admin/plans');
                         },
                       ),
                       AdminCard(
@@ -144,7 +144,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         icon: Icons.public,
                         color: Colors.deepOrange,
                         onTap: () {
-                          context.go('/admin/countries');
+                          context.push('/admin/countries');
                         },
                       ),
                       AdminCard(
@@ -153,7 +153,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         icon: Icons.map,
                         color: Colors.purple,
                         onTap: () {
-                          context.go('/admin/regions');
+                          context.push('/admin/regions');
                         },
                       ),
                     ],

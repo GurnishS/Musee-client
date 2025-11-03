@@ -5,7 +5,6 @@ import 'package:bloc/bloc.dart';
 import 'package:just_audio/just_audio.dart';
 
 import 'player_state.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PlayerCubit extends Cubit<PlayerViewState> {
   final AudioPlayer _player;
@@ -44,18 +43,12 @@ class PlayerCubit extends Cubit<PlayerViewState> {
   Future<void> playTrack(PlayerTrack track) async {
     emit(state.copyWith(track: track, buffering: true));
     try {
-      // Ensure Authorization header is sent when available and not already provided
-      final token = Supabase.instance.client.auth.currentSession?.accessToken;
-      final headers = <String, String>{
-        if (track.headers != null) ...track.headers!,
-        if (token != null &&
-            token.isNotEmpty &&
-            (track.headers == null ||
-                !track.headers!.containsKey('Authorization')))
-          'Authorization': 'Bearer $token',
-        'Accept':
-            'application/vnd.apple.mpegurl,application/x-mpegURL,application/json',
-      };
+      // Only use headers explicitly provided by the caller.
+      // Do NOT auto-attach Authorization or default headers for media URLs
+      // since most playback endpoints are public or signed; extra headers can
+      // cause 403s and, on some platforms (Windows), may trigger a proxy
+      // server code path with instability.
+      final headers = track.headers ?? const <String, String>{};
       // Prefer AudioSource.uri for explicit header control
       final uri = Uri.parse(track.url);
       await _player.setAudioSource(

@@ -10,6 +10,7 @@ import 'package:musee/features/admin_users/presentation/widgets/page_size_dropdo
 import 'package:musee/features/admin_users/presentation/widgets/users_table.dart';
 import 'package:musee/features/admin_users/presentation/widgets/users_list.dart';
 import 'package:musee/features/admin_users/presentation/widgets/pagination_controls.dart';
+import 'package:musee/core/common/widgets/admin_sidebar.dart';
 
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
@@ -52,6 +53,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           ),
         ],
       ),
+      drawer: const Drawer(child: AdminSidebar()),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

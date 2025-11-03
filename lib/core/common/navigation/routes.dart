@@ -8,6 +8,8 @@ class Routes {
   static const String adminUserCreate = '/admin/users/create-new';
   static const String adminUserDetail = '/admin/users/:id';
   static const String adminArtists = '/admin/artists';
+  static const String adminArtistCreate = '/admin/artists/create-new';
+  static const String adminArtistDetail = '/admin/artists/:id';
   static const String adminAlbums = '/admin/albums';
   static const String adminPlans = '/admin/plans';
   static const String adminTracks = '/admin/tracks';
