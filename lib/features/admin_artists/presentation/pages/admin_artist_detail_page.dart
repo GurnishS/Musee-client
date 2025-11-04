@@ -120,8 +120,9 @@ class _AdminArtistDetailPageState extends State<AdminArtistDetailPage> {
 
     if (_bioCtrl.text.trim() != o.bio) body['bio'] = _bioCtrl.text.trim();
     final coverUrl = _coverUrlCtrl.text.trim();
-    if ((o.coverUrl ?? '') != coverUrl)
+    if ((o.coverUrl ?? '') != coverUrl) {
       body['cover_url'] = coverUrl.isEmpty ? null : coverUrl;
+    }
 
     final genres = _genresCtrl.text
         .split(',')
@@ -142,12 +143,8 @@ class _AdminArtistDetailPageState extends State<AdminArtistDetailPage> {
 
     if ((_regionId ?? '') != (o.regionId ?? '')) body['region_id'] = _regionId;
 
-    final dobStr = _dateOfBirth != null
-        ? _dateOfBirth!.toIso8601String().split('T').first
-        : null;
-    final oDobStr = o.dateOfBirth != null
-        ? o.dateOfBirth!.toIso8601String().split('T').first
-        : null;
+    final dobStr = _dateOfBirth?.toIso8601String().split('T').first;
+    final oDobStr = o.dateOfBirth?.toIso8601String().split('T').first;
     if (dobStr != oDobStr) body['date_of_birth'] = dobStr;
 
     // Proper social_links parsing

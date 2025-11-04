@@ -56,7 +56,7 @@ class _UserAlbumView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    Future<String?> _fetchPlayableUrl(String trackId) async {
+    Future<String?> fetchPlayableUrl(String trackId) async {
       try {
         final client = GetIt.I<dio.Dio>();
         final token = Supabase.instance.client.auth.currentSession?.accessToken;
@@ -152,7 +152,7 @@ class _UserAlbumView extends StatelessWidget {
                               ? null
                               : () async {
                                   final first = album.tracks.first;
-                                  final url = await _fetchPlayableUrl(
+                                  final url = await fetchPlayableUrl(
                                     first.trackId,
                                   );
                                   if (url == null) {
@@ -241,7 +241,7 @@ class _UserAlbumView extends StatelessWidget {
                                 icon: const Icon(Icons.play_arrow_rounded),
                                 tooltip: 'Play',
                                 onPressed: () async {
-                                  final url = await _fetchPlayableUrl(
+                                  final url = await fetchPlayableUrl(
                                     t.trackId,
                                   );
                                   if (url == null) {
@@ -275,7 +275,7 @@ class _UserAlbumView extends StatelessWidget {
                             ],
                           ),
                           onTap: () async {
-                            final url = await _fetchPlayableUrl(t.trackId);
+                            final url = await fetchPlayableUrl(t.trackId);
                             if (url == null) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(

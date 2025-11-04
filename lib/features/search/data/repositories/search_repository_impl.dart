@@ -1,6 +1,6 @@
 import 'package:musee/core/error/failures.dart';
 import 'package:musee/features/search/data/datasources/search_remote_data_source.dart';
-import 'package:musee/features/search/domain/entities/search_result.dart';
+import 'package:musee/features/search/domain/entities/catalog_search.dart';
 import 'package:musee/features/search/domain/entities/suggestion.dart';
 import 'package:musee/features/search/domain/repository/search_repository.dart';
 import 'package:fpdart/fpdart.dart';
@@ -21,11 +21,11 @@ class SearchRepositoryImpl implements SearchRepository {
   }
 
   @override
-  Future<Either<Failure, List<SearchResult>>> searchQuery(String query) {
+  Future<Either<Failure, CatalogSearchResults>> searchCatalog(String query) {
     try {
       return remoteDataSource
-          .searchQuery(query)
-          .then((videos) => Right(videos));
+          .searchCatalog(query)
+          .then((results) => Right(results));
     } catch (error) {
       return Future.value(Left(Failure(error.toString())));
     }

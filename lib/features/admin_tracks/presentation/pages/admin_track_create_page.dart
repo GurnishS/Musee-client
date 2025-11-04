@@ -29,6 +29,7 @@ class _AdminTrackCreatePageState extends State<AdminTrackCreatePage> {
 
   PlatformFile? _audioFile;
   PlatformFile? _videoFile;
+  bool _submitting = false;
 
   // Additional artists to link at creation
   final List<_ArtistLink> _artists = [];
@@ -60,7 +61,7 @@ class _AdminTrackCreatePageState extends State<AdminTrackCreatePage> {
                   (a) => UuidItem(
                     id: a.id,
                     label:
-                        (a.title.isNotEmpty ? a.title : 'Album') + ' • ' + a.id,
+                        '${a.title.isNotEmpty ? a.title : 'Album'} • ${a.id}',
                   ),
                 )
                 .toList();
@@ -118,11 +119,7 @@ class _AdminTrackCreatePageState extends State<AdminTrackCreatePage> {
                   (a) => UuidItem(
                     id: a.id,
                     label:
-                        (a.userName?.isNotEmpty == true
-                            ? a.userName!
-                            : 'Artist') +
-                        ' • ' +
-                        a.id,
+                        '${a.userName?.isNotEmpty == true ? a.userName! : 'Artist'} • ${a.id}',
                   ),
                 )
                 .toList();
@@ -147,6 +144,7 @@ class _AdminTrackCreatePageState extends State<AdminTrackCreatePage> {
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     if (_formKey.currentState?.validate() != true) return;
     if (_albumId == null || _albumId!.isEmpty) {
       _showSnack('Please pick an album', error: true);
@@ -161,6 +159,7 @@ class _AdminTrackCreatePageState extends State<AdminTrackCreatePage> {
       _showSnack('Enter a valid duration in seconds', error: true);
       return;
     }
+    setState(() => _submitting = true);
     final create = serviceLocator<CreateTrack>();
     final res = await create(
       CreateTrackParams(
@@ -181,10 +180,18 @@ class _AdminTrackCreatePageState extends State<AdminTrackCreatePage> {
             .toList(),
       ),
     );
-    res.fold((f) => _showSnack(f.message, error: true), (_) {
-      _showSnack('Track created');
-      context.go('/admin/tracks');
-    });
+    res.fold(
+      (f) {
+        _showSnack(f.message, error: true);
+        setState(() => _submitting = false);
+      },
+      (_) async {
+        if (!mounted) return;
+        _showSnack('Track created');
+        setState(() => _submitting = false);
+        context.go('/admin/tracks');
+      },
+    );
   }
 
   @override
@@ -192,342 +199,376 @@ class _AdminTrackCreatePageState extends State<AdminTrackCreatePage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Create Track')),
       drawer: const Drawer(child: AdminSidebar()),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                children: [
-                  LayoutBuilder(
-                    builder: (context, c) {
-                      final isNarrow = c.maxWidth < 700;
-                      if (isNarrow) {
-                        return Column(
-                          children: [
-                            TextFormField(
-                              controller: _titleCtrl,
-                              decoration: const InputDecoration(
-                                labelText: 'Title *',
-                              ),
-                              validator: (v) => (v == null || v.trim().isEmpty)
-                                  ? 'Required'
-                                  : null,
-                            ),
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              decoration: const InputDecoration(
-                                labelText: 'Album *',
-                              ),
-                              readOnly: true,
-                              controller: _albumCtrl,
-                              onTap: _pickAlbum,
-                            ),
-                          ],
-                        );
-                      }
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _titleCtrl,
-                              decoration: const InputDecoration(
-                                labelText: 'Title *',
-                              ),
-                              validator: (v) => (v == null || v.trim().isEmpty)
-                                  ? 'Required'
-                                  : null,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              decoration: const InputDecoration(
-                                labelText: 'Album *',
-                              ),
-                              readOnly: true,
-                              controller: _albumCtrl,
-                              onTap: _pickAlbum,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  LayoutBuilder(
-                    builder: (context, c) {
-                      final isNarrow = c.maxWidth < 700;
-                      if (isNarrow) {
-                        return Column(
-                          children: [
-                            TextFormField(
-                              controller: _durationCtrl,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: 'Duration (seconds) *',
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              controller: _lyricsCtrl,
-                              decoration: const InputDecoration(
-                                labelText: 'Lyrics URL',
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _durationCtrl,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: 'Duration (seconds) *',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _lyricsCtrl,
-                              decoration: const InputDecoration(
-                                labelText: 'Lyrics URL',
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
+      body: Stack(
+        children: [
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
                     children: [
-                      Checkbox(
-                        value: _isExplicit,
-                        onChanged: (v) =>
-                            setState(() => _isExplicit = v ?? false),
+                      LayoutBuilder(
+                        builder: (context, c) {
+                          final isNarrow = c.maxWidth < 700;
+                          if (isNarrow) {
+                            return Column(
+                              children: [
+                                TextFormField(
+                                  controller: _titleCtrl,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Title *',
+                                  ),
+                                  validator: (v) =>
+                                      (v == null || v.trim().isEmpty)
+                                      ? 'Required'
+                                      : null,
+                                ),
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  decoration: const InputDecoration(
+                                    labelText: 'Album *',
+                                  ),
+                                  readOnly: true,
+                                  controller: _albumCtrl,
+                                  onTap: _pickAlbum,
+                                ),
+                              ],
+                            );
+                          }
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _titleCtrl,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Title *',
+                                  ),
+                                  validator: (v) =>
+                                      (v == null || v.trim().isEmpty)
+                                      ? 'Required'
+                                      : null,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextFormField(
+                                  decoration: const InputDecoration(
+                                    labelText: 'Album *',
+                                  ),
+                                  readOnly: true,
+                                  controller: _albumCtrl,
+                                  onTap: _pickAlbum,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
-                      const Text('Explicit'),
-                      const SizedBox(width: 16),
-                      Checkbox(
-                        value: _isPublished,
-                        onChanged: (v) =>
-                            setState(() => _isPublished = v ?? false),
+                      const SizedBox(height: 12),
+                      LayoutBuilder(
+                        builder: (context, c) {
+                          final isNarrow = c.maxWidth < 700;
+                          if (isNarrow) {
+                            return Column(
+                              children: [
+                                TextFormField(
+                                  controller: _durationCtrl,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Duration (seconds) *',
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  controller: _lyricsCtrl,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Lyrics URL',
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _durationCtrl,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Duration (seconds) *',
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _lyricsCtrl,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Lyrics URL',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
-                      const Text('Published'),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Card(
-                    elevation: 0,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      const SizedBox(height: 12),
+                      Row(
                         children: [
-                          const Text(
-                            'Media',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                          Checkbox(
+                            value: _isExplicit,
+                            onChanged: (v) =>
+                                setState(() => _isExplicit = v ?? false),
                           ),
-                          const SizedBox(height: 8),
-                          LayoutBuilder(
-                            builder: (context, c) {
-                              final isNarrow = c.maxWidth < 700;
-                              final audioTile = ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: const Icon(Icons.audiotrack),
-                                title: Text(
-                                  _audioFile?.name ??
-                                      'Pick audio file (required)',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                                trailing: Wrap(
-                                  spacing: 8,
-                                  children: [
-                                    OutlinedButton.icon(
-                                      onPressed: _pickAudio,
-                                      icon: const Icon(Icons.upload_file),
-                                      label: const Text('Choose'),
-                                    ),
-                                    if (_audioFile != null)
-                                      IconButton(
-                                        tooltip: 'Clear',
-                                        onPressed: () =>
-                                            setState(() => _audioFile = null),
-                                        icon: const Icon(Icons.clear),
-                                      ),
-                                  ],
-                                ),
-                              );
-                              final videoTile = ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: const Icon(
-                                  Icons.movie_creation_outlined,
-                                ),
-                                title: Text(
-                                  _videoFile?.name ?? 'Pick video (optional)',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                                trailing: Wrap(
-                                  spacing: 8,
-                                  children: [
-                                    OutlinedButton.icon(
-                                      onPressed: _pickVideo,
-                                      icon: const Icon(Icons.upload_file),
-                                      label: const Text('Choose'),
-                                    ),
-                                    if (_videoFile != null)
-                                      IconButton(
-                                        tooltip: 'Clear',
-                                        onPressed: () =>
-                                            setState(() => _videoFile = null),
-                                        icon: const Icon(Icons.clear),
-                                      ),
-                                  ],
-                                ),
-                              );
-                              if (isNarrow) {
-                                return Column(
-                                  children: [
-                                    audioTile,
-                                    const SizedBox(height: 8),
-                                    videoTile,
-                                  ],
-                                );
-                              }
-                              return Row(
-                                children: [
-                                  Expanded(child: audioTile),
-                                  const SizedBox(width: 12),
-                                  Expanded(child: videoTile),
-                                ],
-                              );
-                            },
+                          const Text('Explicit'),
+                          const SizedBox(width: 16),
+                          Checkbox(
+                            value: _isPublished,
+                            onChanged: (v) =>
+                                setState(() => _isPublished = v ?? false),
                           ),
+                          const Text('Published'),
                         ],
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Card(
-                    elevation: 0,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Additional artists',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                      const SizedBox(height: 12),
+                      Card(
+                        elevation: 0,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Media',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 8),
+                              LayoutBuilder(
+                                builder: (context, c) {
+                                  final isNarrow = c.maxWidth < 700;
+                                  final audioTile = ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: const Icon(Icons.audiotrack),
+                                    title: Text(
+                                      _audioFile?.name ??
+                                          'Pick audio file (required)',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                    trailing: Wrap(
+                                      spacing: 8,
+                                      children: [
+                                        OutlinedButton.icon(
+                                          onPressed: _submitting
+                                              ? null
+                                              : _pickAudio,
+                                          icon: const Icon(Icons.upload_file),
+                                          label: const Text('Choose'),
+                                        ),
+                                        if (_audioFile != null)
+                                          IconButton(
+                                            tooltip: 'Clear',
+                                            onPressed: _submitting
+                                                ? null
+                                                : () => setState(
+                                                    () => _audioFile = null,
+                                                  ),
+                                            icon: const Icon(Icons.clear),
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                  final videoTile = ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: const Icon(
+                                      Icons.movie_creation_outlined,
+                                    ),
+                                    title: Text(
+                                      _videoFile?.name ??
+                                          'Pick video (optional)',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                    trailing: Wrap(
+                                      spacing: 8,
+                                      children: [
+                                        OutlinedButton.icon(
+                                          onPressed: _submitting
+                                              ? null
+                                              : _pickVideo,
+                                          icon: const Icon(Icons.upload_file),
+                                          label: const Text('Choose'),
+                                        ),
+                                        if (_videoFile != null)
+                                          IconButton(
+                                            tooltip: 'Clear',
+                                            onPressed: _submitting
+                                                ? null
+                                                : () => setState(
+                                                    () => _videoFile = null,
+                                                  ),
+                                            icon: const Icon(Icons.clear),
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                  if (isNarrow) {
+                                    return Column(
+                                      children: [
+                                        audioTile,
+                                        const SizedBox(height: 8),
+                                        videoTile,
+                                      ],
+                                    );
+                                  }
+                                  return Row(
+                                    children: [
+                                      Expanded(child: audioTile),
+                                      const SizedBox(width: 12),
+                                      Expanded(child: videoTile),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          if (_artists.isEmpty)
-                            const Text('None')
-                          else
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: _artists
-                                  .asMap()
-                                  .entries
-                                  .map(
-                                    (e) => Chip(
-                                      label: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(e.value.label),
-                                          const SizedBox(width: 8),
-                                          DropdownButton<String>(
-                                            value: e.value.role,
-                                            items: const [
-                                              DropdownMenuItem(
-                                                value: 'viewer',
-                                                child: Text('viewer'),
-                                              ),
-                                              DropdownMenuItem(
-                                                value: 'editor',
-                                                child: Text('editor'),
-                                              ),
-                                              DropdownMenuItem(
-                                                value: 'owner',
-                                                child: Text('owner'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Card(
+                        elevation: 0,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Additional artists',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 8),
+                              if (_artists.isEmpty)
+                                const Text('None')
+                              else
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _artists
+                                      .asMap()
+                                      .entries
+                                      .map(
+                                        (e) => Chip(
+                                          label: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(e.value.label),
+                                              const SizedBox(width: 8),
+                                              DropdownButton<String>(
+                                                value: e.value.role,
+                                                items: const [
+                                                  DropdownMenuItem(
+                                                    value: 'viewer',
+                                                    child: Text('viewer'),
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    value: 'editor',
+                                                    child: Text('editor'),
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    value: 'owner',
+                                                    child: Text('owner'),
+                                                  ),
+                                                ],
+                                                onChanged: (v) => setState(
+                                                  () => _artists[e.key] = e
+                                                      .value
+                                                      .copyWith(
+                                                        role: v ?? 'viewer',
+                                                      ),
+                                                ),
                                               ),
                                             ],
-                                            onChanged: (v) => setState(
-                                              () => _artists[e.key] = e.value
-                                                  .copyWith(
-                                                    role: v ?? 'viewer',
-                                                  ),
-                                            ),
                                           ),
-                                        ],
-                                      ),
-                                      onDeleted: () => setState(
-                                        () => _artists.removeAt(e.key),
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                          const SizedBox(height: 8),
-                          OutlinedButton.icon(
-                            onPressed: _addArtist,
-                            icon: const Icon(Icons.person_add),
-                            label: const Text('Add artist'),
+                                          onDeleted: () => setState(
+                                            () => _artists.removeAt(e.key),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              const SizedBox(height: 8),
+                              OutlinedButton.icon(
+                                onPressed: _submitting ? null : _addArtist,
+                                icon: const Icon(Icons.person_add),
+                                label: const Text('Add artist'),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 20),
+                      LayoutBuilder(
+                        builder: (context, c) {
+                          final isNarrow = c.maxWidth < 500;
+                          if (isNarrow) {
+                            return Wrap(
+                              alignment: WrapAlignment.end,
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                TextButton(
+                                  onPressed: _submitting
+                                      ? null
+                                      : () => context.pop(),
+                                  child: const Text('Cancel'),
+                                ),
+                                FilledButton(
+                                  onPressed: _submitting ? null : _submit,
+                                  child: const Text('Create'),
+                                ),
+                              ],
+                            );
+                          }
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed: _submitting
+                                    ? null
+                                    : () => context.pop(),
+                                child: const Text('Cancel'),
+                              ),
+                              const SizedBox(width: 8),
+                              FilledButton(
+                                onPressed: _submitting ? null : _submit,
+                                child: const Text('Create'),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  LayoutBuilder(
-                    builder: (context, c) {
-                      final isNarrow = c.maxWidth < 500;
-                      if (isNarrow) {
-                        return Wrap(
-                          alignment: WrapAlignment.end,
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            TextButton(
-                              onPressed: () => context.pop(),
-                              child: const Text('Cancel'),
-                            ),
-                            FilledButton(
-                              onPressed: _submit,
-                              child: const Text('Create'),
-                            ),
-                          ],
-                        );
-                      }
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () => context.pop(),
-                            child: const Text('Cancel'),
-                          ),
-                          const SizedBox(width: 8),
-                          FilledButton(
-                            onPressed: _submit,
-                            child: const Text('Create'),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+          if (_submitting)
+            Positioned.fill(
+              child: AbsorbPointer(
+                absorbing: true,
+                child: Container(
+                  color: Colors.black.withOpacity(0.35),
+                  child: const Center(
+                    child: _UploadingIndicator(label: 'Uploading track...'),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -545,4 +586,22 @@ class _ArtistLink {
         label: label ?? this.label,
         role: role ?? this.role,
       );
+}
+
+class _UploadingIndicator extends StatelessWidget {
+  final String label;
+  const _UploadingIndicator({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const CircularProgressIndicator(),
+        const SizedBox(height: 12),
+        Text(label, style: theme.textTheme.bodyMedium),
+      ],
+    );
+  }
 }

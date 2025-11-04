@@ -95,7 +95,7 @@ class _AdminUserCreatePageState extends State<AdminUserCreatePage> {
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<SubscriptionType>(
-                          value: _subscriptionType,
+                          initialValue: _subscriptionType,
                           decoration: const InputDecoration(
                             labelText: 'Subscription type',
                           ),

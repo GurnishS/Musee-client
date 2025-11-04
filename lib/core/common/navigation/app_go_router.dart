@@ -30,6 +30,9 @@ import 'package:go_router/go_router.dart';
 import 'dart:async';
 import 'package:musee/features/user_albums/presentation/pages/user_album_page.dart';
 import 'package:musee/features/search/presentation/pages/search_page.dart';
+import 'package:musee/features/search/presentation/pages/search_results_page.dart';
+import 'package:musee/features/search/presentation/bloc/search_bloc.dart';
+import 'package:musee/core/common/pages/coming_soon_page.dart';
 
 class AppGoRouter {
   static GoRouter createRouter(AppUserCubit appUserCubit) {
@@ -236,7 +239,38 @@ class AppGoRouter {
         GoRoute(
           path: '/search',
           name: 'search',
-          builder: (context, state) => const SearchPage(),
+          builder: (context, state) {
+            final q = state.uri.queryParameters['q'];
+            if (q != null && q.trim().isNotEmpty) {
+              return BlocProvider(
+                create: (_) => SearchBloc(serviceLocator(), serviceLocator()),
+                child: SearchResultsPage(query: q),
+              );
+            }
+            return const SearchPage();
+          },
+        ),
+
+        // Coming soon placeholders
+        GoRoute(
+          path: '/library',
+          name: 'library',
+          builder: (context, state) => const ComingSoonPage(
+            featureName: 'Your Library',
+            selectedIndex: 2,
+          ),
+        ),
+        GoRoute(
+          path: '/premium',
+          name: 'premium',
+          builder: (context, state) =>
+              const ComingSoonPage(featureName: 'Premium', selectedIndex: 3),
+        ),
+        GoRoute(
+          path: '/create',
+          name: 'create',
+          builder: (context, state) =>
+              const ComingSoonPage(featureName: 'Create', selectedIndex: 4),
         ),
 
         GoRoute(

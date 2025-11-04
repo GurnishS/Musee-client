@@ -62,7 +62,7 @@ class BottomNavBar extends StatelessWidget {
                   context,
                   Icons.add_outlined,
                   Icons.add,
-                  3,
+                  4,
                   'Create',
                   '/create',
                 ),

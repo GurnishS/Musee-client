@@ -146,11 +146,9 @@ class _AdminAlbumDetailPageState extends State<AdminAlbumDetailPage> {
                   (a) => UuidItem(
                     id: a.id,
                     label:
-                        (a.userName?.isNotEmpty == true
+                        '${a.userName?.isNotEmpty == true
                             ? a.userName!
-                            : 'Artist') +
-                        ' • ' +
-                        a.id,
+                            : 'Artist'} • ${a.id}',
                   ),
                 )
                 .toList();

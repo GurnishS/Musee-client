@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
-import 'package:musee/features/search/domain/entities/search_result.dart';
 import 'package:musee/features/search/domain/entities/suggestion.dart';
+import 'package:musee/features/search/domain/entities/catalog_search.dart';
 import 'package:musee/features/search/domain/usecases/get_suggestions.dart';
 import 'package:musee/features/search/domain/usecases/get_search_results.dart';
 import 'package:flutter/foundation.dart';
@@ -35,8 +35,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     on<SearchQuery>((event, emit) async {
       emit(SearchQueryLoading());
       try {
-        final videos = await getSearchResults(event.query);
-        videos.fold(
+        final results = await getSearchResults(event.query);
+        results.fold(
           (failure) => emit(VideosError(failure.message)),
           (data) => emit(SearchResultsLoaded(data)),
         );

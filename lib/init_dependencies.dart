@@ -76,6 +76,11 @@ import 'package:musee/features/user__dashboard/domain/repository/user_dashboard_
 import 'package:musee/features/user__dashboard/domain/usecases/list_made_for_you.dart';
 import 'package:musee/features/user__dashboard/domain/usecases/list_trending.dart';
 import 'package:musee/features/user__dashboard/presentation/bloc/user_dashboard_cubit.dart';
+import 'package:musee/features/search/data/datasources/search_remote_data_source.dart';
+import 'package:musee/features/search/data/repositories/search_repository_impl.dart';
+import 'package:musee/features/search/domain/repository/search_repository.dart';
+import 'package:musee/features/search/domain/usecases/get_suggestions.dart';
+import 'package:musee/features/search/domain/usecases/get_search_results.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -84,6 +89,7 @@ Future<void> initDependencies() async {
   final supabase = await Supabase.initialize(
     url: AppSecrets.supabaseUrl,
     anonKey: AppSecrets.supabaseAnonKey,
+    authOptions: const FlutterAuthClientOptions(autoRefreshToken: true),
   );
   serviceLocator.registerLazySingleton(() => supabase.client);
   // Dio for REST backend
@@ -108,6 +114,7 @@ Future<void> initDependencies() async {
   // user features
   _initUserAlbums();
   _initUserDashboard();
+  _initSearch();
 }
 
 void _initAuth() {
@@ -351,4 +358,19 @@ void _initUserDashboard() {
         serviceLocator<ListTrending>(),
       ),
     );
+}
+
+void _initSearch() {
+  serviceLocator
+    // datasource
+    ..registerLazySingleton<SearchRemoteDataSource>(
+      () => SearchRemoteDataSourceImpl(serviceLocator<SupabaseClient>()),
+    )
+    // repository
+    ..registerLazySingleton<SearchRepository>(
+      () => SearchRepositoryImpl(serviceLocator()),
+    )
+    // use cases
+    ..registerFactory(() => GetSuggestions(serviceLocator()))
+    ..registerFactory(() => GetSearchResults(serviceLocator()));
 }

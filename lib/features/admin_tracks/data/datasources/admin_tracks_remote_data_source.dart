@@ -137,10 +137,12 @@ class AdminTracksRemoteDataSourceImpl implements AdminTracksRemoteDataSource {
     form.fields.add(MapEntry('album_id', albumId));
     form.fields.add(MapEntry('duration', duration.toString()));
     if (lyricsUrl != null) form.fields.add(MapEntry('lyrics_url', lyricsUrl));
-    if (isExplicit != null)
+    if (isExplicit != null) {
       form.fields.add(MapEntry('is_explicit', isExplicit.toString()));
-    if (isPublished != null)
+    }
+    if (isPublished != null) {
       form.fields.add(MapEntry('is_published', isPublished.toString()));
+    }
     if (artists != null && artists.isNotEmpty) {
       form.fields.add(MapEntry('artists', jsonEncode(artists)));
     }
@@ -188,13 +190,16 @@ class AdminTracksRemoteDataSourceImpl implements AdminTracksRemoteDataSource {
       final form = dio.FormData();
       if (title != null) form.fields.add(MapEntry('title', title));
       if (albumId != null) form.fields.add(MapEntry('album_id', albumId));
-      if (duration != null)
+      if (duration != null) {
         form.fields.add(MapEntry('duration', duration.toString()));
+      }
       if (lyricsUrl != null) form.fields.add(MapEntry('lyrics_url', lyricsUrl));
-      if (isExplicit != null)
+      if (isExplicit != null) {
         form.fields.add(MapEntry('is_explicit', isExplicit.toString()));
-      if (isPublished != null)
+      }
+      if (isPublished != null) {
         form.fields.add(MapEntry('is_published', isPublished.toString()));
+      }
       if (artists != null && artists.isNotEmpty) {
         form.fields.add(MapEntry('artists', jsonEncode(artists)));
       }

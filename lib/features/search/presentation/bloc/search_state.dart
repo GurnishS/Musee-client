@@ -12,7 +12,7 @@ final class SearchLoading extends SearchState {}
 final class SearchQueryLoading extends SearchState {}
 
 final class SearchResultsLoaded extends SearchState {
-  final List<SearchResult> results;
+  final CatalogSearchResults results;
   const SearchResultsLoaded(this.results);
 
   @override

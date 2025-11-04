@@ -24,6 +24,7 @@ class _AdminTrackDetailPageState extends State<AdminTrackDetailPage> {
   Track? _track;
   bool _loading = true;
   String? _error;
+  bool _saving = false;
 
   // Editable fields
   final _titleCtrl = TextEditingController();
@@ -105,7 +106,7 @@ class _AdminTrackDetailPageState extends State<AdminTrackDetailPage> {
                   (a) => UuidItem(
                     id: a.id,
                     label:
-                        (a.title.isNotEmpty ? a.title : 'Album') + ' • ' + a.id,
+                        '${a.title.isNotEmpty ? a.title : 'Album'} • ${a.id}',
                   ),
                 )
                 .toList();
@@ -148,7 +149,9 @@ class _AdminTrackDetailPageState extends State<AdminTrackDetailPage> {
 
   Future<void> _save() async {
     if (_track == null) return;
+    if (_saving) return;
     final duration = int.tryParse(_durationCtrl.text.trim());
+    setState(() => _saving = true);
     final update = serviceLocator<UpdateTrack>();
     final res = await update(
       UpdateTrackParams(
@@ -167,15 +170,22 @@ class _AdminTrackDetailPageState extends State<AdminTrackDetailPage> {
         videoFilename: _videoFile?.name,
       ),
     );
-    res.fold((f) => _showSnack(f.message, error: true), (t) async {
-      setState(() {
-        _track = t;
-        _audioFile = null;
-        _videoFile = null;
-      });
-      _showSnack('Saved');
-      await _load();
-    });
+    res.fold(
+      (f) {
+        _showSnack(f.message, error: true);
+        setState(() => _saving = false);
+      },
+      (t) async {
+        setState(() {
+          _track = t;
+          _audioFile = null;
+          _videoFile = null;
+        });
+        _showSnack('Saved');
+        await _load();
+        if (mounted) setState(() => _saving = false);
+      },
+    );
   }
 
   Future<void> _addArtist() async {
@@ -197,11 +207,7 @@ class _AdminTrackDetailPageState extends State<AdminTrackDetailPage> {
                   (a) => UuidItem(
                     id: a.id,
                     label:
-                        (a.userName?.isNotEmpty == true
-                            ? a.userName!
-                            : 'Artist') +
-                        ' • ' +
-                        a.id,
+                        '${a.userName?.isNotEmpty == true ? a.userName! : 'Artist'} • ${a.id}',
                   ),
                 )
                 .toList();
@@ -247,35 +253,58 @@ class _AdminTrackDetailPageState extends State<AdminTrackDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final content = _loading
+        ? const Center(child: CircularProgressIndicator())
+        : _error != null
+        ? Center(child: Text(_error!))
+        : _track == null
+        ? const Center(child: Text('Not found'))
+        : Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1100),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ListView(
+                  children: [
+                    _headerSection(),
+                    const SizedBox(height: 16),
+                    _artistsSection(),
+                    const SizedBox(height: 16),
+                    _audioVariantsSection(),
+                  ],
+                ),
+              ),
+            ),
+          );
     return Scaffold(
       appBar: AppBar(
         title: const Text('Track details'),
-        actions: [IconButton(onPressed: _save, icon: const Icon(Icons.save))],
+        actions: [
+          IconButton(
+            onPressed: _saving ? null : _save,
+            tooltip: _saving ? 'Saving…' : 'Save',
+            icon: const Icon(Icons.save),
+          ),
+        ],
       ),
       drawer: const Drawer(child: AdminSidebar()),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(child: Text(_error!))
-          : _track == null
-          ? const Center(child: Text('Not found'))
-          : Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1100),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: ListView(
-                    children: [
-                      _headerSection(),
-                      const SizedBox(height: 16),
-                      _artistsSection(),
-                      const SizedBox(height: 16),
-                      _audioVariantsSection(),
-                    ],
+      body: Stack(
+        children: [
+          content,
+          if (_saving)
+            Positioned.fill(
+              child: AbsorbPointer(
+                absorbing: true,
+                child: Container(
+                  color: Colors.black.withOpacity(0.35),
+                  child: const Center(
+                    child: _UploadingIndicator(label: 'Uploading changes…'),
                   ),
                 ),
               ),
             ),
+        ],
+      ),
     );
   }
 
@@ -387,7 +416,7 @@ class _AdminTrackDetailPageState extends State<AdminTrackDetailPage> {
                         runSpacing: 8,
                         children: [
                           OutlinedButton.icon(
-                            onPressed: _pickAudio,
+                            onPressed: _saving ? null : _pickAudio,
                             icon: const Icon(Icons.audiotrack),
                             label: Text(
                               _audioFile?.name == null
@@ -397,7 +426,7 @@ class _AdminTrackDetailPageState extends State<AdminTrackDetailPage> {
                             ),
                           ),
                           OutlinedButton.icon(
-                            onPressed: _pickVideo,
+                            onPressed: _saving ? null : _pickVideo,
                             icon: const Icon(Icons.movie_creation_outlined),
                             label: Text(
                               _videoFile?.name == null
@@ -407,7 +436,7 @@ class _AdminTrackDetailPageState extends State<AdminTrackDetailPage> {
                             ),
                           ),
                           FilledButton.icon(
-                            onPressed: _save,
+                            onPressed: _saving ? null : _save,
                             icon: const Icon(Icons.save),
                             label: const Text('Save'),
                           ),
@@ -433,7 +462,7 @@ class _AdminTrackDetailPageState extends State<AdminTrackDetailPage> {
                       const Text('Published'),
                       const Spacer(),
                       OutlinedButton.icon(
-                        onPressed: _pickAudio,
+                        onPressed: _saving ? null : _pickAudio,
                         icon: const Icon(Icons.audiotrack),
                         label: Text(
                           _audioFile?.name == null
@@ -444,7 +473,7 @@ class _AdminTrackDetailPageState extends State<AdminTrackDetailPage> {
                       ),
                       const SizedBox(width: 8),
                       OutlinedButton.icon(
-                        onPressed: _pickVideo,
+                        onPressed: _saving ? null : _pickVideo,
                         icon: const Icon(Icons.movie_creation_outlined),
                         label: Text(
                           _videoFile?.name == null
@@ -455,7 +484,7 @@ class _AdminTrackDetailPageState extends State<AdminTrackDetailPage> {
                       ),
                       const SizedBox(width: 8),
                       FilledButton.icon(
-                        onPressed: _save,
+                        onPressed: _saving ? null : _save,
                         icon: const Icon(Icons.save),
                         label: const Text('Save'),
                       ),
@@ -619,6 +648,24 @@ class _AdminTrackDetailPageState extends State<AdminTrackDetailPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _UploadingIndicator extends StatelessWidget {
+  final String label;
+  const _UploadingIndicator({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const CircularProgressIndicator(),
+        const SizedBox(height: 12),
+        Text(label, style: theme.textTheme.bodyMedium),
+      ],
     );
   }
 }

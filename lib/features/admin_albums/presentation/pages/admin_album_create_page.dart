@@ -65,11 +65,9 @@ class _AdminAlbumCreatePageState extends State<AdminAlbumCreatePage> {
                   (a) => UuidItem(
                     id: a.id,
                     label:
-                        (a.userName?.isNotEmpty == true
+                        '${a.userName?.isNotEmpty == true
                             ? a.userName!
-                            : 'Artist') +
-                        ' • ' +
-                        a.id,
+                            : 'Artist'} • ${a.id}',
                   ),
                 )
                 .toList();
@@ -162,7 +160,7 @@ class _AdminAlbumCreatePageState extends State<AdminAlbumCreatePage> {
                           controller: TextEditingController(
                             text:
                                 _ownerArtistLabel ??
-                                (_ownerArtistId != null ? _ownerArtistId : ''),
+                                (_ownerArtistId ?? ''),
                           ),
                           onTap: _pickOwnerArtist,
                         ),

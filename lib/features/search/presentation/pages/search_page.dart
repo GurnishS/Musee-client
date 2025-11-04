@@ -79,7 +79,7 @@ class _SearchPageState extends State<SearchPage> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Discover Amazing Content',
+              'Search for music',
               style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: colorScheme.onSurface,
@@ -88,7 +88,7 @@ class _SearchPageState extends State<SearchPage> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Tap the search bar above to find videos, music, and more',
+              'Tap the search bar above to find songs, albums, and artists',
               style: textTheme.bodyLarge?.copyWith(
                 color: colorScheme.onSurface.withAlpha(179),
               ),
@@ -105,10 +105,10 @@ class _SearchPageState extends State<SearchPage> {
   /// Builds search tips section with helpful suggestions
   Widget _buildSearchTipsSection(ColorScheme colorScheme, TextTheme textTheme) {
     final tips = [
-      {'icon': Icons.trending_up, 'text': 'Try trending topics'},
-      {'icon': Icons.music_note, 'text': 'Search for music'},
-      {'icon': Icons.movie, 'text': 'Find movies & shows'},
-      {'icon': Icons.sports_esports, 'text': 'Discover gaming content'},
+      {'icon': Icons.trending_up, 'text': 'Try trending tracks'},
+      {'icon': Icons.album, 'text': 'Search by album'},
+      {'icon': Icons.person, 'text': 'Find your favorite artists'},
+      {'icon': Icons.music_note, 'text': 'Filter by song title'},
     ];
 
     return Column(
@@ -183,7 +183,7 @@ class _SearchPageState extends State<SearchPage> {
       ),
       filled: true,
       fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
-      hintText: 'Search for videos...',
+      hintText: 'Search songs, albums, artists',
       hintStyle: TextStyle(
         color: isDark ? Colors.grey[400] : Colors.grey[600],
         fontSize: 16,

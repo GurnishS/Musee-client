@@ -1,5 +1,5 @@
 import 'package:musee/core/common/widgets/loader.dart';
-import 'package:musee/features/search/domain/entities/search_result.dart';
+import 'package:musee/features/search/domain/entities/catalog_search.dart';
 import 'package:musee/features/search/presentation/bloc/search_bloc.dart';
 import 'package:musee/features/search/presentation/pages/search_suggestions_page.dart';
 import 'package:musee/init_dependencies.dart';
@@ -7,6 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musee/core/common/widgets/bottom_nav_bar.dart';
+import 'package:musee/core/common/widgets/player_bottom_sheet.dart';
+import 'package:dio/dio.dart' as dio;
+import 'package:get_it/get_it.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:musee/core/secrets/app_secrets.dart';
 
 /// Search results page displaying search results grouped by extractors
 /// Features horizontal scrollable sections for each platform (YouTube, etc.)
@@ -135,7 +142,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
   Widget _buildStateBasedContent(BuildContext context, SearchState state) {
     return switch (state) {
       SearchQueryLoading() => const Loader(),
-      SearchResultsLoaded(results: final results) => _buildSearchResults(
+      SearchResultsLoaded(results: final results) => _buildCatalogSearchResults(
         results,
       ),
       VideosError() => _buildErrorState(),
@@ -143,19 +150,53 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
     };
   }
 
-  /// Builds search results content
-  Widget _buildSearchResults(List<SearchResult> searchResults) {
-    if (searchResults.isEmpty) {
-      return _buildEmptyState();
-    }
+  Widget _buildCatalogSearchResults(CatalogSearchResults results) {
+    if (results.isEmpty) return _buildEmptyState();
+
+    final top = _pickTopResult(results);
 
     return CustomScrollView(
       slivers: [
         _buildSearchHeader(),
-        ...searchResults.map(_buildExtractorSection),
+        if (top != null) SliverToBoxAdapter(child: _TopResultCard(top: top)),
+        if (results.tracks.isNotEmpty)
+          SliverToBoxAdapter(
+            child: _SectionList(
+              title: 'Songs',
+              children: results.tracks
+                  .map((t) => _TrackTile(track: t))
+                  .toList(),
+            ),
+          ),
+        if (results.artists.isNotEmpty)
+          SliverToBoxAdapter(
+            child: _SectionList(
+              title: 'Artists',
+              children: results.artists
+                  .map((a) => _ArtistTile(artist: a))
+                  .toList(),
+            ),
+          ),
+        if (results.albums.isNotEmpty)
+          SliverToBoxAdapter(
+            child: _SectionList(
+              title: 'Albums',
+              children: results.albums
+                  .map((a) => _AlbumTile(album: a))
+                  .toList(),
+            ),
+          ),
         const SliverToBoxAdapter(child: SizedBox(height: 32)),
       ],
     );
+  }
+
+  Object? _pickTopResult(CatalogSearchResults r) {
+    // Prefer artist, then track, then album
+    if (r.artists.isNotEmpty) return r.artists.first;
+    if (r.tracks.isNotEmpty) return r.tracks.first;
+    if (r.albums.isNotEmpty) return r.albums.first;
+    return null;
   }
 
   /// Builds search results header
@@ -173,12 +214,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
     );
   }
 
-  /// Builds extractor section (YouTube, Dailymotion, etc.)
-  Widget _buildExtractorSection(SearchResult searchResult) {
-    return SliverToBoxAdapter(
-      child: _ExtractorSection(searchResult: searchResult),
-    );
-  }
+  // legacy section removed
 
   /// Builds empty state when no results found
   Widget _buildEmptyState() {
@@ -257,315 +293,278 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
   }
 }
 
-/// Widget for displaying results from a single extractor platform
-class _ExtractorSection extends StatelessWidget {
-  final SearchResult searchResult;
-
-  const _ExtractorSection({required this.searchResult});
+/// Section wrapper
+class _SectionList extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+  const _SectionList({required this.title, required this.children});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
+    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionHeader(context, colorScheme, textTheme),
-          _buildHorizontalVideoList(),
+          Text(title, style: theme.textTheme.titleLarge),
+          const SizedBox(height: 8),
+          ...children,
         ],
       ),
     );
-  }
-
-  /// Builds section header with extractor name and result count
-  Widget _buildSectionHeader(
-    BuildContext context,
-    ColorScheme colorScheme,
-    TextTheme textTheme,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          _buildExtractorBadge(colorScheme, textTheme),
-          const SizedBox(width: 12),
-          _buildResultCount(colorScheme, textTheme),
-          const Spacer(),
-          _buildSeeAllButton(),
-        ],
-      ),
-    );
-  }
-
-  /// Builds extractor name badge
-  Widget _buildExtractorBadge(ColorScheme colorScheme, TextTheme textTheme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _getExtractorIcon(searchResult.extractorKey),
-          const SizedBox(width: 6),
-          Text(
-            searchResult.title,
-            style: textTheme.titleMedium?.copyWith(
-              color: colorScheme.onPrimaryContainer,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Builds result count text
-  Widget _buildResultCount(ColorScheme colorScheme, TextTheme textTheme) {
-    return Text(
-      '${searchResult.results.length} results',
-      style: textTheme.bodyMedium?.copyWith(
-        color: colorScheme.onSurface.withAlpha(179),
-      ),
-    );
-  }
-
-  /// Builds see all button
-  Widget _buildSeeAllButton() {
-    return TextButton(
-      onPressed: () {
-        // TODO: Navigate to see all results from this extractor
-      },
-      child: const Text('See all'),
-    );
-  }
-
-  /// Builds horizontal scrollable video list
-  Widget _buildHorizontalVideoList() {
-    return SizedBox(
-      height: 280,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        scrollDirection: Axis.horizontal,
-        itemCount: searchResult.results.length,
-        itemBuilder: (context, index) {
-          return _VideoCard(
-            searchItem: searchResult.results[index],
-            extractorKey: searchResult.extractorKey,
-          );
-        },
-      ),
-    );
-  }
-
-  /// Gets icon for extractor platform
-  Widget _getExtractorIcon(String extractorKey) {
-    return switch (extractorKey.toLowerCase()) {
-      'youtube' => const Icon(
-        Icons.play_circle_fill,
-        size: 18,
-        color: Colors.red,
-      ),
-      'dailymotion' => const Icon(
-        Icons.video_library,
-        size: 18,
-        color: Colors.blue,
-      ),
-      _ => const Icon(Icons.play_arrow, size: 18),
-    };
   }
 }
 
-/// Individual video card widget
-class _VideoCard extends StatelessWidget {
-  final SearchItem searchItem;
-  final String extractorKey;
-  static const double cardWidth = 220;
-
-  const _VideoCard({required this.searchItem, required this.extractorKey});
+class _TopResultCard extends StatelessWidget {
+  final Object top; // CatalogArtist | CatalogTrack | CatalogAlbum
+  const _TopResultCard({required this.top});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return InkWell(
-      onTap: () => _handleVideoTap(context),
-      borderRadius: BorderRadius.circular(12),
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Container(
-        width: cardWidth,
-        margin: const EdgeInsets.only(right: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Row(
           children: [
-            _buildThumbnail(context, colorScheme, textTheme),
-            const SizedBox(height: 8),
-            _buildVideoInfo(colorScheme, textTheme),
+            _artwork(context),
+            const SizedBox(width: 16),
+            Expanded(child: _info(context)),
           ],
         ),
       ),
     );
   }
 
-  /// Builds video thumbnail with duration overlay
-  Widget _buildThumbnail(
-    BuildContext context,
-    ColorScheme colorScheme,
-    TextTheme textTheme,
-  ) {
-    return AspectRatio(
-      aspectRatio: 16 / 9,
-      child: Stack(
-        children: [
-          _buildThumbnailImage(colorScheme),
-          if (searchItem.duration != null) _buildDurationOverlay(textTheme),
-        ],
-      ),
-    );
-  }
-
-  /// Builds thumbnail image container
-  Widget _buildThumbnailImage(ColorScheme colorScheme) {
-    final hasValidThumbnail = searchItem.thumbnail?.isNotEmpty == true;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.black12,
-        borderRadius: BorderRadius.circular(8),
-        image: hasValidThumbnail
-            ? DecorationImage(
-                image: NetworkImage(searchItem.thumbnail!),
-                fit: BoxFit.cover,
-              )
-            : null,
-      ),
-      child: !hasValidThumbnail
-          ? Center(
-              child: Icon(
-                Icons.play_circle_fill,
-                size: 48,
-                color: colorScheme.onSurface.withAlpha(153),
-              ),
-            )
-          : null,
-    );
-  }
-
-  /// Builds duration overlay
-  Widget _buildDurationOverlay(TextTheme textTheme) {
-    return Positioned(
-      right: 8,
-      bottom: 8,
+  Widget _artwork(BuildContext context) {
+    final double size = 96;
+    String? imageUrl;
+    IconData fallback = Icons.music_note;
+    if (top is CatalogAlbum) {
+      imageUrl = (top as CatalogAlbum).coverUrl;
+      fallback = Icons.album;
+    } else if (top is CatalogArtist) {
+      imageUrl = (top as CatalogArtist).avatarUrl;
+      fallback = Icons.person;
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.black.withAlpha(179),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          _formatDuration(searchItem.duration!),
-          style: textTheme.bodySmall?.copyWith(color: Colors.white),
-        ),
+        width: size,
+        height: size,
+        color: Theme.of(context).colorScheme.surfaceVariant,
+        child: imageUrl != null && imageUrl.isNotEmpty
+            ? Image.network(imageUrl, fit: BoxFit.cover)
+            : Icon(fallback, size: 48),
       ),
     );
   }
 
-  /// Builds video information section
-  Widget _buildVideoInfo(ColorScheme colorScheme, TextTheme textTheme) {
+  Widget _info(BuildContext context) {
+    final theme = Theme.of(context);
+    String title;
+    String subtitle;
+    if (top is CatalogArtist) {
+      final a = top as CatalogArtist;
+      title = a.name ?? 'Artist';
+      subtitle = 'Artist';
+    } else if (top is CatalogTrack) {
+      final t = top as CatalogTrack;
+      title = t.title;
+      final artistNames = t.artists.map((a) => a.name ?? a.artistId).join(', ');
+      subtitle = 'Song • $artistNames';
+    } else {
+      final a = top as CatalogAlbum;
+      title = a.title;
+      final artistNames = a.artists.map((x) => x.name ?? x.artistId).join(', ');
+      subtitle = 'Album • $artistNames';
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildTitle(textTheme),
+        Text(
+          title,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: 6),
-        if (searchItem.uploader != null) ...[
-          _buildUploader(colorScheme, textTheme),
-          const SizedBox(height: 4),
-        ],
-        if (searchItem.uploadDate != null)
-          _buildUploadDate(colorScheme, textTheme),
+        Text(
+          subtitle,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }
+}
 
-  /// Builds video title
-  Widget _buildTitle(TextTheme textTheme) {
-    return Text(
-      searchItem.title,
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-      style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500),
+class _TrackTile extends StatelessWidget {
+  final CatalogTrack track;
+  const _TrackTile({required this.track});
+
+  @override
+  Widget build(BuildContext context) {
+    final artistNames = track.artists
+        .map((a) => a.name ?? a.artistId)
+        .join(', ');
+    return ListTile(
+      leading: const Icon(Icons.music_note),
+      title: Text(track.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(artistNames, maxLines: 1, overflow: TextOverflow.ellipsis),
+      trailing: const _TypeChip(label: 'Song'),
+      onTap: () async {
+        final url = await _fetchPlayableUrl(track.trackId);
+        if (url == null) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Unable to load stream URL')),
+            );
+          }
+          return;
+        }
+        await showPlayerBottomSheet(
+          context,
+          audioUrl: url,
+          title: track.title,
+          artist: artistNames,
+          // album and image unknown here from search results
+        );
+      },
     );
   }
+}
 
-  /// Builds uploader name
-  Widget _buildUploader(ColorScheme colorScheme, TextTheme textTheme) {
-    return Text(
-      searchItem.uploader!,
-      style: textTheme.bodySmall?.copyWith(
-        color: colorScheme.onSurface.withAlpha(204),
+class _ArtistTile extends StatelessWidget {
+  final CatalogArtist artist;
+  const _ArtistTile({required this.artist});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundImage: artist.avatarUrl != null
+            ? NetworkImage(artist.avatarUrl!)
+            : null,
+        child: artist.avatarUrl == null ? const Icon(Icons.person) : null,
       ),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
+      title: Text(artist.name ?? 'Artist'),
+      trailing: const _TypeChip(label: 'Artist'),
+      onTap: () {
+        // TODO: Navigate to artist page when available
+      },
     );
   }
+}
 
-  /// Builds upload date
-  Widget _buildUploadDate(ColorScheme colorScheme, TextTheme textTheme) {
-    return Text(
-      _formatUploadDate(searchItem.uploadDate!),
-      style: textTheme.bodySmall?.copyWith(
-        color: colorScheme.onSurface.withAlpha(153),
+class _AlbumTile extends StatelessWidget {
+  final CatalogAlbum album;
+  const _AlbumTile({required this.album});
+
+  @override
+  Widget build(BuildContext context) {
+    final artistNames = album.artists
+        .map((a) => a.name ?? a.artistId)
+        .join(', ');
+    return ListTile(
+      leading: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: album.coverUrl != null && album.coverUrl!.isNotEmpty
+            ? Image.network(
+                album.coverUrl!,
+                width: 48,
+                height: 48,
+                fit: BoxFit.cover,
+              )
+            : const Icon(Icons.album),
+      ),
+      title: Text(album.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(artistNames, maxLines: 1, overflow: TextOverflow.ellipsis),
+      trailing: const _TypeChip(label: 'Album'),
+      onTap: () {
+        // Navigate to album details
+        context.push('/albums/${album.albumId}');
+      },
+    );
+  }
+}
+
+// Fetch a playable URL for a given track, selecting the best URL for platform.
+Future<String?> _fetchPlayableUrl(String trackId) async {
+  try {
+    final client = GetIt.I<dio.Dio>();
+    final token = Supabase.instance.client.auth.currentSession?.accessToken;
+    final res = await client.get(
+      '${AppSecrets.backendUrl}/api/user/tracks/$trackId',
+      options: dio.Options(
+        headers: token != null
+            ? {'Authorization': 'Bearer $token', 'Accept': 'application/json'}
+            : {'Accept': 'application/json'},
       ),
     );
-  }
+    final data = (res.data as Map).cast<String, dynamic>();
+    final hls = (data['hls'] as Map?)?.cast<String, dynamic>();
+    final master = hls?['master'] as String?;
 
-  /// Handles video card tap
-  void _handleVideoTap(BuildContext context) {
-    final encodedUrl = Uri.encodeComponent(searchItem.url);
-    final videoId = searchItem.id;
-
-    context.push(
-      "/info?url=$encodedUrl&video_id=$videoId&extractor_key=$extractorKey",
-    );
-  }
-
-  /// Formats duration from seconds to readable string
-  String _formatDuration(int durationInSeconds) {
-    final hours = durationInSeconds ~/ 3600;
-    final minutes = (durationInSeconds % 3600) ~/ 60;
-    final seconds = durationInSeconds % 60;
-
-    if (hours > 0) {
-      return "$hours:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}";
-    }
-    return "$minutes:${seconds.toString().padLeft(2, '0')}";
-  }
-
-  /// Formats upload date to readable string
-  String _formatUploadDate(String uploadDate) {
-    try {
-      final date = DateTime.parse(uploadDate);
-      final difference = DateTime.now().difference(date);
-
-      if (difference.inDays > 365) {
-        final years = (difference.inDays / 365).floor();
-        return "$years year${years > 1 ? 's' : ''} ago";
-      } else if (difference.inDays > 30) {
-        final months = (difference.inDays / 30).floor();
-        return "$months month${months > 1 ? 's' : ''} ago";
-      } else if (difference.inDays > 0) {
-        return "${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago";
-      } else if (difference.inHours > 0) {
-        return "${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago";
+    // Prefer progressive MP3 on web and Windows for widest support
+    final isWindows =
+        !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
+    if (kIsWeb || isWindows) {
+      final audios = (data['audios'] as List?)?.cast<dynamic>() ?? const [];
+      String? bestMp3;
+      int bestBitrate = -1;
+      for (final item in audios) {
+        final m = (item as Map).cast<String, dynamic>();
+        final ext = (m['ext'] as String?)?.toLowerCase();
+        final path = m['path'] as String?;
+        final br = (m['bitrate'] as num?)?.toInt() ?? 0;
+        if (ext == 'mp3' && path != null && path.isNotEmpty) {
+          if (br > bestBitrate) {
+            bestBitrate = br;
+            bestMp3 = path;
+          }
+        }
       }
-      return "Just now";
-    } catch (e) {
-      return uploadDate;
+      return bestMp3 ?? master;
     }
+
+    // Other native platforms: use HLS master
+    return master;
+  } catch (_) {
+    return null;
+  }
+}
+
+class _TypeChip extends StatelessWidget {
+  final String label;
+  const _TypeChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withAlpha(96),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withAlpha(96),
+        ),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 }
