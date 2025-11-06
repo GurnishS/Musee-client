@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musee/core/common/widgets/floating_player_panel.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
+import 'package:musee/core/player/player_cubit.dart';
+import 'package:musee/core/player/player_state.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -10,67 +14,78 @@ class BottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8.0,
-      color: colorScheme.surface,
-      elevation: 8,
-      padding: EdgeInsets.all(4),
-      height: 180,
-      child: SizedBox(
-        height: 200,
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            FloatingPlayerPanel(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: <Widget>[
-                _buildNavItem(
-                  context,
-                  Icons.home_outlined,
-                  Icons.home,
-                  0,
-                  'Home',
-                  '/dashboard',
-                ),
-                _buildNavItem(
-                  context,
-                  Icons.search_outlined,
-                  Icons.search,
-                  1,
-                  'Search',
-                  '/search',
-                ),
-                _buildNavItem(
-                  context,
-                  Icons.library_books_outlined,
-                  Icons.library_books,
-                  2,
-                  'Your Library',
-                  '/library',
-                ),
-                _buildNavItem(
-                  context,
-                  Icons.money_outlined,
-                  Icons.money,
-                  3,
-                  'Premium',
-                  '/premium',
-                ),
-                _buildNavItem(
-                  context,
-                  Icons.add_outlined,
-                  Icons.add,
-                  4,
-                  'Create',
-                  '/create',
+    final cubit = GetIt.I<PlayerCubit>();
+
+    return BlocBuilder<PlayerCubit, PlayerViewState>(
+      bloc: cubit,
+      builder: (context, state) {
+        final hasTrack = state.track != null;
+        final barHeight = hasTrack ? 180.0 : 68.0;
+        final boxHeight = hasTrack ? 200.0 : 60.0;
+
+        return BottomAppBar(
+          shape: const CircularNotchedRectangle(),
+          notchMargin: 8.0,
+          color: colorScheme.surface,
+          elevation: 8,
+          padding: const EdgeInsets.all(4),
+          height: barHeight,
+          child: SizedBox(
+            height: boxHeight,
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                if (hasTrack) const FloatingPlayerPanel(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: <Widget>[
+                    _buildNavItem(
+                      context,
+                      Icons.home_outlined,
+                      Icons.home,
+                      0,
+                      'Home',
+                      '/dashboard',
+                    ),
+                    _buildNavItem(
+                      context,
+                      Icons.search_outlined,
+                      Icons.search,
+                      1,
+                      'Search',
+                      '/search',
+                    ),
+                    _buildNavItem(
+                      context,
+                      Icons.library_books_outlined,
+                      Icons.library_books,
+                      2,
+                      'Your Library',
+                      '/library',
+                    ),
+                    _buildNavItem(
+                      context,
+                      Icons.money_outlined,
+                      Icons.money,
+                      3,
+                      'Premium',
+                      '/premium',
+                    ),
+                    _buildNavItem(
+                      context,
+                      Icons.add_outlined,
+                      Icons.add,
+                      4,
+                      'Create',
+                      '/create',
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

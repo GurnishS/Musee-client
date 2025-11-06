@@ -9,6 +9,8 @@ import 'package:musee/core/common/widgets/player_bottom_sheet.dart';
 import 'package:musee/core/secrets/app_secrets.dart';
 import 'package:musee/features/user_albums/presentation/bloc/user_album_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:musee/core/player/player_cubit.dart';
+import 'package:musee/features/player/domain/entities/queue_item.dart';
 
 class UserAlbumPage extends StatefulWidget {
   final String albumId;
@@ -270,7 +272,31 @@ class _UserAlbumView extends StatelessWidget {
                               ),
                               IconButton(
                                 icon: const Icon(Icons.more_vert_rounded),
-                                onPressed: () {},
+                                onPressed: () async {
+                                  final action = await showMenu<String>(
+                                    context: context,
+                                    position: const RelativeRect.fromLTRB(100, 100, 0, 0),
+                                    items: const [
+                                      PopupMenuItem(value: 'queue', child: Text('Add to queue')),
+                                    ],
+                                  );
+                                  if (action == 'queue') {
+                                    final item = QueueItem(
+                                      trackId: t.trackId,
+                                      title: t.title,
+                                      artist: artists,
+                                      album: album.title,
+                                      imageUrl: album.coverUrl,
+                                      durationSeconds: t.duration,
+                                    );
+                                    await GetIt.I<PlayerCubit>().addToQueue([item]);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Added to queue')),
+                                      );
+                                    }
+                                  }
+                                },
                               ),
                             ],
                           ),

@@ -33,6 +33,8 @@ import 'package:musee/features/search/presentation/pages/search_page.dart';
 import 'package:musee/features/search/presentation/pages/search_results_page.dart';
 import 'package:musee/features/search/presentation/bloc/search_bloc.dart';
 import 'package:musee/core/common/pages/coming_soon_page.dart';
+import 'package:musee/features/user_artists/presentation/pages/user_artist_page.dart';
+import 'package:musee/features/user_artists/presentation/bloc/user_artist_bloc.dart';
 
 class AppGoRouter {
   static GoRouter createRouter(AppUserCubit appUserCubit) {
@@ -232,6 +234,18 @@ class AppGoRouter {
           builder: (context, state) {
             final id = state.pathParameters['id'] ?? '';
             return UserAlbumPage(albumId: id);
+          },
+        ),
+
+        GoRoute(
+          path: '/artists/:id',
+          name: 'user_artist',
+          builder: (context, state) {
+            final id = state.pathParameters['id'] ?? '';
+            return BlocProvider(
+              create: (_) => serviceLocator<UserArtistBloc>(),
+              child: UserArtistPage(artistId: id),
+            );
           },
         ),
 

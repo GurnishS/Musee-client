@@ -56,8 +56,8 @@ class _PlayerBackdrop extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final top = Color.alphaBlend(cs.primary.withOpacity(0.08), cs.surface);
-    final mid = Color.alphaBlend(cs.secondary.withOpacity(0.06), cs.surface);
+    final top = Color.alphaBlend(cs.primary.withValues(alpha: 0.08), cs.surface);
+    final mid = Color.alphaBlend(cs.secondary.withValues(alpha: 0.06), cs.surface);
     final bottom = cs.surface;
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -131,7 +131,7 @@ class _PlayerSheetBodyState extends State<_PlayerSheetBody> {
                             letterSpacing: 1.1,
                             fontWeight: FontWeight.w600,
                             color: theme.textTheme.labelSmall?.color
-                                ?.withOpacity(0.9),
+                                ?.withValues(alpha: 0.9),
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -234,7 +234,7 @@ class _PlayerSheetBodyState extends State<_PlayerSheetBody> {
                           artist,
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: theme.textTheme.bodyLarge?.color
-                                ?.withOpacity(0.85),
+                                ?.withValues(alpha: 0.85),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -293,7 +293,7 @@ class _PlayerSheetBodyState extends State<_PlayerSheetBody> {
                   const Spacer(),
                   IconButton(
                     tooltip: 'Previous',
-                    onPressed: () {},
+                    onPressed: () => context.read<PlayerCubit>().previous(),
                     icon: const Icon(Icons.skip_previous_rounded),
                   ),
                   const SizedBox(width: 8),
@@ -322,7 +322,7 @@ class _PlayerSheetBodyState extends State<_PlayerSheetBody> {
                   const SizedBox(width: 8),
                   IconButton(
                     tooltip: 'Next',
-                    onPressed: () {},
+                    onPressed: () => context.read<PlayerCubit>().next(userInitiated: true),
                     icon: const Icon(Icons.skip_next_rounded),
                   ),
                   const Spacer(),
@@ -353,7 +353,19 @@ class _PlayerSheetBodyState extends State<_PlayerSheetBody> {
                   const SizedBox(width: 8),
                   IconButton(
                     tooltip: 'Lyrics / Queue',
-                    onPressed: () {},
+                    onPressed: () {
+                      final cubit = context.read<PlayerCubit>();
+                      showModalBottomSheet(
+                        context: context,
+                        useRootNavigator: true,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (ctx) => BlocProvider.value(
+                          value: cubit,
+                          child: const _QueueSheet(),
+                        ),
+                      );
+                    },
                     icon: const Icon(Icons.queue_music_rounded),
                   ),
                 ],
@@ -363,6 +375,90 @@ class _PlayerSheetBodyState extends State<_PlayerSheetBody> {
           );
         },
       ),
+    );
+  }
+}
+
+class _QueueSheet extends StatelessWidget {
+  const _QueueSheet();
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      builder: (ctx, scroll) {
+        return Material(
+          color: theme.colorScheme.surface,
+          elevation: 8,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text('Queue', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                    ),
+                    IconButton(
+                      tooltip: 'Clear queue',
+                      onPressed: () => context.read<PlayerCubit>().clearQueue(),
+                      icon: const Icon(Icons.clear_all_rounded),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: BlocBuilder<PlayerCubit, PlayerViewState>(
+                    builder: (context, state) {
+                      final items = state.queue;
+                      if (items.isEmpty) {
+                        return const Center(child: Text('Your queue is empty'));
+                      }
+                      return ReorderableListView.builder(
+                        scrollController: scroll,
+                        itemCount: items.length,
+                        onReorder: (from, to) {
+                          // Flutter uses a different insertion index when moving down
+                          final newIndex = to > from ? to - 1 : to;
+                          context.read<PlayerCubit>().reorderQueue(from, newIndex);
+                        },
+                        itemBuilder: (context, index) {
+                          final q = items[index];
+                          final playing = index == state.currentIndex;
+                          return ListTile(
+                            key: ValueKey(q.trackId),
+                            leading: playing
+                                ? const Icon(Icons.volume_up_rounded)
+                                : Text('${index + 1}', style: theme.textTheme.labelLarge),
+                            title: Text(q.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                            subtitle: Text(q.artist, maxLines: 1, overflow: TextOverflow.ellipsis),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  tooltip: 'Remove',
+                                  icon: const Icon(Icons.close_rounded),
+                                  onPressed: () => context.read<PlayerCubit>().removeFromQueue(q.trackId),
+                                ),
+                                const Icon(Icons.drag_handle_rounded),
+                              ],
+                            ),
+                            onTap: () => context.read<PlayerCubit>().playFromQueueTrackId(q.trackId),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

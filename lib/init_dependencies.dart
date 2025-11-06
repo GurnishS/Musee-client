@@ -81,6 +81,14 @@ import 'package:musee/features/search/data/repositories/search_repository_impl.d
 import 'package:musee/features/search/domain/repository/search_repository.dart';
 import 'package:musee/features/search/domain/usecases/get_suggestions.dart';
 import 'package:musee/features/search/domain/usecases/get_search_results.dart';
+import 'package:musee/features/user_artists/data/datasources/user_artists_remote_data_source.dart';
+import 'package:musee/features/user_artists/data/repositories/user_artists_repository_impl.dart';
+import 'package:musee/features/user_artists/domain/repository/user_artists_repository.dart';
+import 'package:musee/features/user_artists/domain/usecases/get_user_artist.dart';
+import 'package:musee/features/user_artists/presentation/bloc/user_artist_bloc.dart';
+import 'package:musee/features/player/data/datasources/player_remote_data_source.dart';
+import 'package:musee/features/player/data/repositories/player_repository_impl.dart';
+import 'package:musee/features/player/domain/repository/player_repository.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -97,7 +105,16 @@ Future<void> initDependencies() async {
 
   //core
   serviceLocator.registerLazySingleton(() => AppUserCubit());
-  serviceLocator.registerLazySingleton(() => PlayerCubit());
+  // Register player with repository
+  serviceLocator
+    ..registerLazySingleton<PlayerDataSource>(
+      () => PlayerDataSourceImpl(serviceLocator(), serviceLocator()),
+    )
+    ..registerLazySingleton<PlayerRepository>(
+      () => PlayerRepositoryImpl(serviceLocator()),
+    )
+    ..registerLazySingleton(() => PlayerCubit(repository: serviceLocator()))
+  ;
 
   //auth
   _initAuth();
@@ -113,6 +130,7 @@ Future<void> initDependencies() async {
   _initAdminTracks();
   // user features
   _initUserAlbums();
+  _initUserArtists();
   _initUserDashboard();
   _initSearch();
 }
@@ -327,6 +345,25 @@ void _initUserAlbums() {
     )
     // bloc
     ..registerFactory(() => UserAlbumBloc(serviceLocator<GetUserAlbum>()));
+}
+
+void _initUserArtists() {
+  serviceLocator
+    // datasource
+    ..registerLazySingleton<UserArtistsRemoteDataSource>(
+      () => UserArtistsRemoteDataSourceImpl(
+        serviceLocator<Dio>(),
+        serviceLocator(),
+      ),
+    )
+    // repository
+    ..registerLazySingleton<UserArtistsRepository>(
+      () => UserArtistsRepositoryImpl(serviceLocator()),
+    )
+    // use case
+    ..registerFactory(() => GetUserArtist(serviceLocator()))
+    // bloc
+    ..registerFactory(() => UserArtistBloc(serviceLocator<GetUserArtist>()));
 }
 
 void _initUserDashboard() {

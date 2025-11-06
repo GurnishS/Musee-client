@@ -41,18 +41,6 @@ class _UserDashboardState extends State<UserDashboard> {
               final width = constraints.maxWidth;
               final isCompact = width < 700;
 
-              // Minimal placeholder for Recently played with the required "Supreme" deep link
-              final recentlyPlayed = <MediaItem>[
-                MediaItem(
-                  title: 'Supreme',
-                  subtitle: 'Album',
-                  imageUrl: 'https://picsum.photos/seed/supreme/300/300',
-                  icon: Icons.album,
-                  onTap: () => context.go(
-                    '/albums/a06af84f-19b7-4688-949a-e7151460bff5',
-                  ),
-                ),
-              ];
 
               return BlocBuilder<UserDashboardCubit, UserDashboardState>(
                 builder: (context, state) {
@@ -101,7 +89,21 @@ class _UserDashboardState extends State<UserDashboard> {
                       SliverToBoxAdapter(
                         child: HorizontalMediaSection(
                           title: 'Recently played',
-                          items: recentlyPlayed,
+                          items: (() {
+                            // Use Made for you as a surrogate for recently played when backend isn't wired yet
+                            final source = state.madeForYou.isNotEmpty
+                                ? state.madeForYou
+                                : state.trending;
+                            return source.take(6).map((a) => MediaItem(
+                                  title: a.title,
+                                  subtitle: a.artists.isNotEmpty
+                                      ? a.artists.first.name
+                                      : 'Album',
+                                  imageUrl: a.coverUrl,
+                                  icon: Icons.album,
+                                  onTap: () => context.go('/albums/${a.albumId}'),
+                                )).toList();
+                          })(),
                           onSeeAll: () {},
                           cardWidth: isCompact ? 140 : 160,
                         ),

@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
+import 'package:musee/features/player/domain/entities/queue_item.dart';
 
 class PlayerTrack extends Equatable {
+  final String? trackId; // nullable when playing ad-hoc URL not from queue
   final String url;
   final String title;
   final String artist;
@@ -9,6 +11,7 @@ class PlayerTrack extends Equatable {
   final Map<String, String>? headers;
 
   const PlayerTrack({
+    this.trackId,
     required this.url,
     required this.title,
     required this.artist,
@@ -17,8 +20,26 @@ class PlayerTrack extends Equatable {
     this.headers,
   });
 
+  PlayerTrack copyWith({
+    String? trackId,
+    String? url,
+    String? title,
+    String? artist,
+    String? album,
+    String? imageUrl,
+    Map<String, String>? headers,
+  }) => PlayerTrack(
+    trackId: trackId ?? this.trackId,
+    url: url ?? this.url,
+    title: title ?? this.title,
+    artist: artist ?? this.artist,
+    album: album ?? this.album,
+    imageUrl: imageUrl ?? this.imageUrl,
+    headers: headers ?? this.headers,
+  );
+
   @override
-  List<Object?> get props => [url, title, artist, album, imageUrl, headers];
+  List<Object?> get props => [trackId, url, title, artist, album, imageUrl, headers];
 }
 
 class PlayerViewState extends Equatable {
@@ -28,6 +49,8 @@ class PlayerViewState extends Equatable {
   final Duration position;
   final Duration duration;
   final double volume;
+  final List<QueueItem> queue;
+  final int currentIndex; // index within queue for currently playing track
 
   const PlayerViewState({
     this.track,
@@ -36,6 +59,8 @@ class PlayerViewState extends Equatable {
     this.position = Duration.zero,
     this.duration = Duration.zero,
     this.volume = 1.0,
+    this.queue = const <QueueItem>[],
+    this.currentIndex = -1,
   });
 
   PlayerViewState copyWith({
@@ -45,6 +70,8 @@ class PlayerViewState extends Equatable {
     Duration? position,
     Duration? duration,
     double? volume,
+    List<QueueItem>? queue,
+    int? currentIndex,
   }) {
     return PlayerViewState(
       track: track ?? this.track,
@@ -53,6 +80,8 @@ class PlayerViewState extends Equatable {
       position: position ?? this.position,
       duration: duration ?? this.duration,
       volume: volume ?? this.volume,
+      queue: queue ?? this.queue,
+      currentIndex: currentIndex ?? this.currentIndex,
     );
   }
 
@@ -64,5 +93,7 @@ class PlayerViewState extends Equatable {
     position,
     duration,
     volume,
+    queue,
+    currentIndex,
   ];
 }

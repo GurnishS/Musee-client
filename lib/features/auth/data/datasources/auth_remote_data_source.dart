@@ -248,7 +248,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   /// Handle Google Sign-In for mobile platforms
   Future<UserModel> _handleMobileGoogleSignIn() async {
     final googleSignIn = GoogleSignIn(
-      clientId: _iosClientId,
+      // On iOS/macOS provide the iOS clientId; on Android keep it null.
+      clientId: (Platform.isIOS || Platform.isMacOS) ? _iosClientId : null,
       serverClientId: _webClientId,
       scopes: ['email', 'profile', 'openid'],
     );

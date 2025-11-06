@@ -68,7 +68,7 @@ class FloatingPlayerPanel extends StatelessWidget {
                         height: 64,
                         child: artUrl == null
                             ? Container(
-                                color: color.primary.withOpacity(0.15),
+                                color: color.primary.withValues(alpha: 0.15),
                                 child: const Icon(Icons.music_note, size: 28),
                               )
                             : Ink.image(
@@ -100,7 +100,7 @@ class FloatingPlayerPanel extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.textTheme.bodySmall?.color
-                                  ?.withOpacity(0.8),
+                                  ?.withValues(alpha: 0.8),
                             ),
                           ),
                         ],
@@ -112,7 +112,7 @@ class FloatingPlayerPanel extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          onPressed: hasTrack ? () {} : null,
+                          onPressed: hasTrack ? () => cubit.previous() : null,
                           tooltip: 'Previous',
                           icon: const Icon(Icons.skip_previous_rounded),
                         ),
@@ -146,7 +146,7 @@ class FloatingPlayerPanel extends StatelessWidget {
                           ),
                         ),
                         IconButton(
-                          onPressed: hasTrack ? () {} : null,
+                          onPressed: hasTrack ? () => cubit.next(userInitiated: true) : null,
                           tooltip: 'Next',
                           icon: const Icon(Icons.skip_next_rounded),
                         ),
@@ -163,7 +163,7 @@ class FloatingPlayerPanel extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: progress,
                         minHeight: 3,
-                        backgroundColor: color.onSurface.withOpacity(0.12),
+                        backgroundColor: color.onSurface.withValues(alpha: 0.12),
                         valueColor: AlwaysStoppedAnimation(color.primary),
                       ),
                     ),

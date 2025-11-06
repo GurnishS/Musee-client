@@ -14,6 +14,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:musee/core/secrets/app_secrets.dart';
+import 'package:musee/core/player/player_cubit.dart';
+import 'package:musee/features/player/domain/entities/queue_item.dart';
 
 /// Search results page displaying search results grouped by extractors
 /// Features horizontal scrollable sections for each platform (YouTube, etc.)
@@ -358,7 +360,7 @@ class _TopResultCard extends StatelessWidget {
       child: Container(
         width: size,
         height: size,
-        color: Theme.of(context).colorScheme.surfaceVariant,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         child: imageUrl != null && imageUrl.isNotEmpty
             ? Image.network(imageUrl, fit: BoxFit.cover)
             : Icon(fallback, size: 48),
@@ -419,7 +421,54 @@ class _TrackTile extends StatelessWidget {
       leading: const Icon(Icons.music_note),
       title: Text(track.title, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(artistNames, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: const _TypeChip(label: 'Song'),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            tooltip: 'Add to queue',
+            icon: const Icon(Icons.queue_music_rounded),
+            onPressed: () async {
+              final item = QueueItem(
+                trackId: track.trackId,
+                title: track.title,
+                artist: artistNames,
+                album: null,
+                imageUrl: null,
+                durationSeconds: track.duration,
+              );
+              await GetIt.I<PlayerCubit>().addToQueue([item]);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Added to queue')),
+                );
+              }
+            },
+          ),
+          IconButton(
+            tooltip: 'Play',
+            icon: const Icon(Icons.play_arrow_rounded),
+            onPressed: () async {
+              final url = await _fetchPlayableUrl(track.trackId);
+              if (url == null) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Unable to load stream URL')),
+                  );
+                }
+                return;
+              }
+              await showPlayerBottomSheet(
+                context,
+                audioUrl: url,
+                title: track.title,
+                artist: artistNames,
+                album: null,
+                imageUrl: null,
+              );
+            },
+          ),
+        ],
+      ),
       onTap: () async {
         final url = await _fetchPlayableUrl(track.trackId);
         if (url == null) {
@@ -457,9 +506,7 @@ class _ArtistTile extends StatelessWidget {
       ),
       title: Text(artist.name ?? 'Artist'),
       trailing: const _TypeChip(label: 'Artist'),
-      onTap: () {
-        // TODO: Navigate to artist page when available
-      },
+      onTap: () => context.push('/artists/${artist.artistId}'),
     );
   }
 }
