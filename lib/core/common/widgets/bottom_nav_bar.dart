@@ -6,10 +6,15 @@ import 'package:get_it/get_it.dart';
 import 'package:musee/core/player/player_cubit.dart';
 import 'package:musee/core/player/player_state.dart';
 
-class BottomNavBar extends StatelessWidget {
+class BottomNavBar extends StatefulWidget {
   final int selectedIndex;
   const BottomNavBar({super.key, required this.selectedIndex});
 
+  @override
+  State<BottomNavBar> createState() => _BottomNavBarState();
+}
+
+class _BottomNavBarState extends State<BottomNavBar> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -99,11 +104,15 @@ class BottomNavBar extends StatelessWidget {
     String route,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isSelected = selectedIndex == index;
+    final isSelected = widget.selectedIndex == index;
 
     return Expanded(
       child: InkWell(
-        onTap: () => context.push(route),
+        onTap: () {
+          if (!isSelected) {
+            context.push(route);
+          }
+        },
         borderRadius: BorderRadius.circular(12),
         child: Container(
           height: 60,

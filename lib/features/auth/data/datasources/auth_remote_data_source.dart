@@ -247,34 +247,42 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   /// Handle Google Sign-In for mobile platforms
   Future<UserModel> _handleMobileGoogleSignIn() async {
-    final googleSignIn = GoogleSignIn(
-      // On iOS/macOS provide the iOS clientId; on Android keep it null.
-      clientId: (Platform.isIOS || Platform.isMacOS) ? _iosClientId : null,
-      serverClientId: _webClientId,
-      scopes: ['email', 'profile', 'openid'],
-    );
+    try {
+      final googleSignIn = GoogleSignIn(
+        // On iOS/macOS provide the iOS clientId; on Android keep it null.
+        clientId: (Platform.isIOS || Platform.isMacOS) ? _iosClientId : null,
+        serverClientId: _webClientId,
+        scopes: ['email', 'profile', 'openid'],
+      );
 
-    final googleUser = await googleSignIn.signIn();
-    if (googleUser == null) {
-      throw 'User cancelled Google Sign-In';
+      final googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        // User cancelled sign-in; wrap in ServerException so UI can show a clear message.
+        throw ServerException('User cancelled Google Sign-In');
+      }
+
+      final googleAuth = await googleUser.authentication;
+      if (googleAuth.idToken == null) {
+        throw ServerException('No ID Token received from Google');
+      }
+
+      final response = await supabaseClient.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: googleAuth.idToken!,
+        accessToken: googleAuth.accessToken,
+      );
+
+      if (response.user == null) {
+        throw ServerException('Failed to authenticate with Supabase');
+      }
+
+      return await _getUserData(response.user!.id);
+    } on ServerException {
+      rethrow;
+    } catch (e) {
+      // Unexpected errors: wrap so repository can surface a useful message.
+      throw ServerException('Google Sign-In failed: $e');
     }
-
-    final googleAuth = await googleUser.authentication;
-    if (googleAuth.idToken == null) {
-      throw 'No ID Token received from Google';
-    }
-
-    final response = await supabaseClient.auth.signInWithIdToken(
-      provider: OAuthProvider.google,
-      idToken: googleAuth.idToken!,
-      accessToken: googleAuth.accessToken,
-    );
-
-    if (response.user == null) {
-      throw 'Failed to authenticate with Supabase';
-    }
-
-    return await _getUserData(response.user!.id);
   }
 
   /// Create HTTP handler for OAuth callback
@@ -321,13 +329,19 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   Future<UserModel> _getUserData(String id) async {
-    if(kDebugMode){
+    if (kDebugMode) {
       debugPrint('Fetching user data for ID: $id');
     }
-    try {
+
+    final client = dio.Dio();
+
+    // Helper to always use the latest access token from Supabase.
+    Future<dio.Response> _doRequest() {
       final accessToken = supabaseClient.auth.currentSession?.accessToken;
-      final client = dio.Dio();
-      final res = await client.get(
+      if (kDebugMode) {
+        debugPrint('Using access token (len): ${accessToken?.length ?? 0}');
+      }
+      return client.get(
         '${AppSecrets.backendUrl}/api/user/users/me',
         options: dio.Options(
           headers: {
@@ -340,6 +354,20 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           receiveTimeout: const Duration(seconds: 30),
         ),
       );
+    }
+
+    try {
+      dio.Response res = await _doRequest();
+
+      // If backend reports unauthorized, give Supabase a brief moment
+      // to refresh the session and retry once.
+      if (res.statusCode == 401) {
+        if (kDebugMode) {
+          debugPrint('Received 401 from /me, retrying once with refreshed session...');
+        }
+        await Future.delayed(const Duration(milliseconds: 500));
+        res = await _doRequest();
+      }
 
       if (res.statusCode == 200 && res.data is Map<String, dynamic>) {
         final data = Map<String, dynamic>.from(res.data as Map);

@@ -44,35 +44,54 @@ class AppGoRouter {
 
     return GoRouter(
       debugLogDiagnostics: true,
-      initialLocation: isAdmin ? Routes.adminDashboard : Routes.dashboard,
+      // Start from dashboard; redirect callback will handle admin vs user
+      // and unauthenticated cases.
+      initialLocation: Routes.dashboard,
       refreshListenable: AppUserChangeNotifier(appUserCubit),
       redirect: (context, state) {
-        final isAuthenticated = appUserCubit.state is AppUserLoggedIn;
+        final appState = appUserCubit.state;
+        final isAuthenticated = appState is AppUserLoggedIn;
+        final user = isAuthenticated ? (appState as AppUserLoggedIn).user : null;
+        final isAdmin = user?.userType == UserType.admin;
 
         final intendedLocation = state.uri.toString();
-
         final isGoingToSignIn = intendedLocation.startsWith(Routes.signIn);
         final isGoingToSignUp = intendedLocation.startsWith(Routes.signUp);
 
-        if (isAuthenticated && isAdmin) {
-          return intendedLocation;
-        } else if (isAuthenticated && !isAdmin) {
-          if (intendedLocation.startsWith(Routes.adminDashboard)) {
-            return Routes.forbidden;
-          }
-          return intendedLocation;
-        }
-
+        // If not authenticated, send to sign-in (unless already on auth routes)
         if (!isAuthenticated && !isGoingToSignIn && !isGoingToSignUp) {
           return '${Routes.signIn}?redirect=${Uri.encodeComponent(intendedLocation)}';
         }
 
-        if (isAuthenticated && isGoingToSignIn) {
-          final redirectUri =
-              state.uri.queryParameters['redirect'] ?? Routes.root;
-          return redirectUri;
+        // Authenticated admin user
+        if (isAuthenticated && isAdmin) {
+          // If hitting root, prefer admin dashboard
+          if (intendedLocation == Routes.root) {
+            return Routes.adminDashboard;
+          }
+          return null; // allow navigation
         }
 
+        // Authenticated non-admin user
+        if (isAuthenticated && !isAdmin) {
+          // Block access to admin routes
+          if (intendedLocation.startsWith(Routes.adminDashboard) ||
+              intendedLocation.startsWith('/admin')) {
+            return Routes.forbidden;
+          }
+
+          // If already signed in and trying to go to sign-in, redirect to
+          // desired redirect target or normal dashboard.
+          if (isGoingToSignIn) {
+            final redirectUri =
+                state.uri.queryParameters['redirect'] ?? Routes.dashboard;
+            return redirectUri;
+          }
+
+          return null; // allow navigation
+        }
+
+        // Unauthenticated users on /sign-in or /sign-up, or any other fallback
         return null;
       },
       routes: [
