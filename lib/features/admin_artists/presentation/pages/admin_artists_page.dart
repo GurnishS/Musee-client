@@ -52,7 +52,6 @@ class _AdminArtistsPageState extends State<AdminArtistsPage> {
           ),
         ],
       ),
-      drawer: const Drawer(child: AdminSidebar()),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

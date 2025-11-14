@@ -224,7 +224,6 @@ class _AdminArtistCreatePageState extends State<AdminArtistCreatePage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Admin • Create Artist')),
-      drawer: const Drawer(child: AdminSidebar()),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(

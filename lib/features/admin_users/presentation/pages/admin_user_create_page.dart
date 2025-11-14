@@ -57,7 +57,6 @@ class _AdminUserCreatePageState extends State<AdminUserCreatePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Create User')),
-      drawer: const Drawer(child: AdminSidebar()),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),

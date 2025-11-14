@@ -195,7 +195,6 @@ class _AdminAlbumDetailPageState extends State<AdminAlbumDetailPage> {
         title: const Text('Album details'),
         actions: [IconButton(onPressed: _save, icon: const Icon(Icons.save))],
       ),
-      drawer: const Drawer(child: AdminSidebar()),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null

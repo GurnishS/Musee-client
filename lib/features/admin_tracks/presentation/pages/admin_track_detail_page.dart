@@ -287,7 +287,6 @@ class _AdminTrackDetailPageState extends State<AdminTrackDetailPage> {
           ),
         ],
       ),
-      drawer: const Drawer(child: AdminSidebar()),
       body: Stack(
         children: [
           content,

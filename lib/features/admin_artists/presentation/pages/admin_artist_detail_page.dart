@@ -375,7 +375,6 @@ class _AdminArtistDetailPageState extends State<AdminArtistDetailPage> {
           const SizedBox(width: 8),
         ],
       ),
-      drawer: const Drawer(child: AdminSidebar()),
       body: FutureBuilder<_DetailData>(
         future: _future,
         builder: (context, snapshot) {

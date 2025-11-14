@@ -32,13 +32,12 @@ class _AdminTracksPageState extends State<AdminTracksPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin • Tracks')),
-      drawer: const Drawer(child: AdminSidebar()),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(Routes.adminTrackCreate),
-        icon: const Icon(Icons.library_music_outlined),
-        label: const Text('New Track'),
-      ),
+      appBar: AppBar(title: const Text('Admin • Tracks'),actions: [IconButton(
+        onPressed:()=> context.push(Routes.adminTrackCreate),
+        icon: const Icon(Icons.library_music),
+        tooltip: 'Create track',
+      ),],),
+
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

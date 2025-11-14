@@ -36,6 +36,7 @@ class _SearchPageState extends State<SearchPage> {
   /// Builds the app bar with search input field
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
+      automaticallyImplyLeading: false,
       backgroundColor: Colors.transparent,
       elevation: 0,
       title: _buildSearchField(),
@@ -46,7 +47,7 @@ class _SearchPageState extends State<SearchPage> {
   Widget _buildSearchField() {
     return Container(
       height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 2),
       child: TextField(
         controller: _searchController,
         maxLines: 1,

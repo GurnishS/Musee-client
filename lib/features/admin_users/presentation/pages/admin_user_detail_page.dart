@@ -101,7 +101,6 @@ class _AdminUserDetailPageState extends State<AdminUserDetailPage> {
           ),
         ],
       ),
-      drawer: const Drawer(child: AdminSidebar()),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null

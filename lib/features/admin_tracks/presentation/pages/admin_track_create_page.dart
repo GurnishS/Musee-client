@@ -198,7 +198,6 @@ class _AdminTrackCreatePageState extends State<AdminTrackCreatePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Create Track')),
-      drawer: const Drawer(child: AdminSidebar()),
       body: Stack(
         children: [
           Center(

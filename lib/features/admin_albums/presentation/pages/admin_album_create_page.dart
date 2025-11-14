@@ -127,7 +127,6 @@ class _AdminAlbumCreatePageState extends State<AdminAlbumCreatePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Create Album')),
-      drawer: const Drawer(child: AdminSidebar()),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),

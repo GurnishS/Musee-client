@@ -50,7 +50,6 @@ class _AdminAlbumsPageState extends State<AdminAlbumsPage> {
           ),
         ],
       ),
-      drawer: const Drawer(child: AdminSidebar()),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
