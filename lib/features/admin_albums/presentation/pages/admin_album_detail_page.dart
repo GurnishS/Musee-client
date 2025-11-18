@@ -9,7 +9,6 @@ import 'package:musee/features/admin_albums/domain/usecases/album_artists_ops.da
 import 'package:musee/features/admin_artists/presentation/widgets/uuid_picker_dialog.dart';
 import 'package:musee/features/admin_artists/domain/usecases/list_artists.dart';
 import 'package:musee/init_dependencies.dart';
-import 'package:musee/core/common/widgets/admin_sidebar.dart';
 
 class AdminAlbumDetailPage extends StatefulWidget {
   final String albumId;

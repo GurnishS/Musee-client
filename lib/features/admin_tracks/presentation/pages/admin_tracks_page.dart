@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musee/core/common/navigation/routes.dart';
-import 'package:musee/core/common/widgets/admin_sidebar.dart';
 import '../bloc/admin_tracks_bloc.dart';
 import '../../domain/entities/track.dart';
 

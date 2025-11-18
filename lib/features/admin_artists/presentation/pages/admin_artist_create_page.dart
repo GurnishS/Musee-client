@@ -8,7 +8,6 @@ import 'package:get_it/get_it.dart';
 import 'package:musee/core/secrets/app_secrets.dart';
 import 'package:musee/features/admin_artists/presentation/bloc/admin_artists_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:musee/core/common/widgets/admin_sidebar.dart';
 
 import '../widgets/uuid_picker_dialog.dart';
 

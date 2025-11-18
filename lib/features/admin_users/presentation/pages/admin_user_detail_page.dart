@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,7 +10,6 @@ import 'package:musee/features/admin_plans/domain/usecases/list_plans.dart';
 import 'package:musee/features/admin_users/domain/usecases/get_user.dart';
 import 'package:musee/features/admin_users/domain/usecases/update_user.dart';
 import 'package:musee/init_dependencies.dart';
-import 'package:musee/core/common/widgets/admin_sidebar.dart';
 
 class AdminUserDetailPage extends StatefulWidget {
   final String userId;

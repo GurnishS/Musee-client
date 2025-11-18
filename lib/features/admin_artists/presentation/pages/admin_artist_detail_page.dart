@@ -1,12 +1,10 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get_it/get_it.dart';
 import 'package:musee/core/secrets/app_secrets.dart';
-import 'package:musee/core/common/widgets/admin_sidebar.dart';
 import 'package:musee/features/admin_artists/data/models/artist_model.dart';
 import 'package:musee/features/admin_artists/presentation/widgets/uuid_picker_dialog.dart';
 import 'package:musee/features/admin_artists/domain/usecases/update_artist.dart';

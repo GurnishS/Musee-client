@@ -336,7 +336,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final client = dio.Dio();
 
     // Helper to always use the latest access token from Supabase.
-    Future<dio.Response> _doRequest() {
+    Future<dio.Response> doRequest() {
       final accessToken = supabaseClient.auth.currentSession?.accessToken;
       if (kDebugMode) {
         debugPrint('Using access token (len): ${accessToken?.length ?? 0}');
@@ -357,7 +357,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
 
     try {
-      dio.Response res = await _doRequest();
+      dio.Response res = await doRequest();
 
       // If backend reports unauthorized, give Supabase a brief moment
       // to refresh the session and retry once.
@@ -366,7 +366,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           debugPrint('Received 401 from /me, retrying once with refreshed session...');
         }
         await Future.delayed(const Duration(milliseconds: 500));
-        res = await _doRequest();
+        res = await doRequest();
       }
 
       if (res.statusCode == 200 && res.data is Map<String, dynamic>) {

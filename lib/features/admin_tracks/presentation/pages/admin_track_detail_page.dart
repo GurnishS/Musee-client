@@ -1,6 +1,5 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:musee/core/common/widgets/admin_sidebar.dart';
 import 'package:musee/features/admin_artists/domain/usecases/list_artists.dart';
 import 'package:musee/features/admin_artists/presentation/widgets/uuid_picker_dialog.dart';
 import 'package:musee/features/admin_albums/domain/usecases/list_albums.dart';

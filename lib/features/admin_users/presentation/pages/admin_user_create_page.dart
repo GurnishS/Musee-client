@@ -9,7 +9,6 @@ import 'package:musee/features/admin_plans/domain/entities/plan.dart';
 import 'package:musee/features/admin_plans/domain/usecases/list_plans.dart';
 import 'package:musee/features/admin_users/domain/usecases/create_user.dart';
 import 'package:musee/init_dependencies.dart';
-import 'package:musee/core/common/widgets/admin_sidebar.dart';
 
 class AdminUserCreatePage extends StatefulWidget {
   const AdminUserCreatePage({super.key});

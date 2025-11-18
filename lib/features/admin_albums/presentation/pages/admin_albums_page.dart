@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:musee/features/admin_albums/domain/entities/album.dart';
 import 'package:musee/features/admin_albums/presentation/bloc/admin_albums_bloc.dart';
-import 'package:musee/core/common/widgets/admin_sidebar.dart';
 
 class AdminAlbumsPage extends StatefulWidget {
   const AdminAlbumsPage({super.key});

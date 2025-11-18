@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:musee/features/admin_artists/presentation/bloc/admin_artists_bloc.dart';
-import 'package:musee/core/common/widgets/admin_sidebar.dart';
 import 'package:musee/features/admin_artists/domain/entities/artist.dart';
 
 class AdminArtistsPage extends StatefulWidget {

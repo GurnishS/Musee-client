@@ -51,7 +51,7 @@ class AppGoRouter {
       redirect: (context, state) {
         final appState = appUserCubit.state;
         final isAuthenticated = appState is AppUserLoggedIn;
-        final user = isAuthenticated ? (appState as AppUserLoggedIn).user : null;
+        final user = isAuthenticated ? (appState).user : null;
         final isAdmin = user?.userType == UserType.admin;
 
         final intendedLocation = state.uri.toString();

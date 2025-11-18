@@ -176,8 +176,9 @@ class PlayerCubit extends Cubit<PlayerViewState> {
     list.insert(to, item);
     // Adjust current index if needed
     var idx = state.currentIndex;
-    if (idx == from) idx = to;
-    else if (from < idx && to >= idx) idx -= 1;
+    if (idx == from) {
+      idx = to;
+    } else if (from < idx && to >= idx) idx -= 1;
     else if (from > idx && to <= idx) idx += 1;
     emit(state.copyWith(queue: list, currentIndex: idx));
     final repo = _repo;

@@ -112,8 +112,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     res.fold((failure) {
       // If we cannot load current user (e.g., no valid session),
       // clear any hydrated user so router redirects to sign-in.
-      _appUserCubit.updateUser(null);
-      emit(AuthInitial());
+      // _appUserCubit.updateUser(null);
+      // emit(AuthInitial());
     }, (user) => _emitAuthSuccess(user, emit));
   }
 
